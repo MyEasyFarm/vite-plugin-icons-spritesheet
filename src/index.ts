@@ -2,7 +2,6 @@
 import { promises as fs } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { stderr } from "node:process";
 import { Readable } from "node:stream";
 import { DOMParser, DOMImplementation, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
 import chalk from "chalk";
@@ -211,33 +210,42 @@ async function lintFileContent(fileContent: string, formatter: Formatter | undef
   if (formatter === "biome" && typeOfFile === "svg") {
     return fileContent;
   }
-  const prettierOptions = ["--parser", typeOfFile === "ts" ? "typescript" : "html"];
-  const biomeOptions = ["format", "--stdin-file-path", `file.${typeOfFile}`];
-  const options = formatter === "biome" ? biomeOptions : prettierOptions;
-
-  const stdinStream = new Readable();
-  stdinStream.push(fileContent);
-  stdinStream.push(null);
-
-  const { process } = exec(formatter, options, {});
-  if (!process?.stdin) {
-    return fileContent;
-  }
-  stdinStream.pipe(process.stdin);
-  process.stderr?.pipe(stderr);
-  process.on("error", (err) => {
-    //console.error(`Error running formatter process: ${err.message}`);
-  });
-
-  let formattedContent = "";
-  process.stdout?.on("data", (data) => {
-    formattedContent = formattedContent + data.toString();
-  });
   return new Promise<string>((resolve) => {
+    const prettierOptions = ["--parser", typeOfFile === "ts" ? "typescript" : "html"];
+    const biomeOptions = ["format", "--stdin-file-path", `file.${typeOfFile}`];
+    const options = formatter === "biome" ? biomeOptions : prettierOptions;
+    const { process } = exec(formatter, options, {});
+    if (!process?.stdin) {
+      return resolve(fileContent);
+    }
+    const stdinStream = new Readable();
+    stdinStream.push(fileContent);
+    stdinStream.push(null);
+    stdinStream.pipe(process.stdin);
+    let formattedContent = "";
+    let errorOutput = "";
+    process.stdout?.on("data", (data) => {
+      formattedContent += data.toString();
+    });
+    process.stderr?.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+    process.on("error", (err) => {
+      console.error(`Error spawning formatter '${formatter}':`, err);
+      resolve(fileContent);
+    });
     process.on("exit", (code) => {
       if (code === 0) {
-        resolve(formattedContent);
+        if (formattedContent.trim() === "") {
+          if (errorOutput.trim() !== "") {
+            console.error(`Formatter '${formatter}' produced empty output. Stderr:`, errorOutput);
+          }
+          resolve(fileContent);
+        } else {
+          resolve(formattedContent);
+        }
       } else {
+        console.error(`Formatter '${formatter}' exited with code ${code}. Stderr:`, errorOutput);
         resolve(fileContent);
       }
     });
