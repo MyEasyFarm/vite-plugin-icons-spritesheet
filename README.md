@@ -23,6 +23,7 @@ We extend our gratitude to the original author and contributors for creating thi
 ### Key Changes from Original
 
 - **ESM-only**: This package is published as ESM-only (no CommonJS support). Make sure your project supports ES modules. If you need CommonJS support, please use the original package.
+- **SVG formatting**: We don't attempt to format the output SVG file with Biome or Prettier, as neither tool supports SVG input. Applying HTML formatting to SVG files would be misusing these formatters, as they are not designed for this file type.
 
 ## Installation
 ```bash

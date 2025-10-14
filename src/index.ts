@@ -206,8 +206,7 @@ async function lintFileContent(fileContent: string, formatter: Formatter | undef
   if (!formatter) {
     return fileContent;
   }
-  // TODO biome formatter for svg (atm it doesn't work)
-  if (formatter === "biome" && typeOfFile === "svg") {
+  if (typeOfFile === "svg") {
     return fileContent;
   }
   return new Promise<string>((resolve) => {
