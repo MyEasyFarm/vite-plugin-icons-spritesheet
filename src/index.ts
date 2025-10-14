@@ -1,9 +1,8 @@
-/*eslint-disable no-console */
 import { promises as fs, globSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { DOMParser, DOMImplementation, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
+import { DOMImplementation, DOMParser, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
 import chalk from "chalk";
 import { exec } from "tinyexec";
 import type { Plugin } from "vite";
@@ -197,7 +196,7 @@ async function generateSvgSprite({
   return writeIfChanged(
     outputPath,
     formattedOutput,
-    `🖼️  Generated SVG spritesheet in ${chalk.green(outputDirRelative)}`
+    `🖼️  Generated SVG spritesheet in ${chalk.green(outputDirRelative)}`,
   );
 }
 
@@ -271,7 +270,7 @@ async function generateTypes({
   const file = await writeIfChanged(
     outputPath,
     formattedOutput,
-    `${chalk.blueBright("TS")} Generated icon types in ${chalk.green(outputPath)}`
+    `${chalk.blueBright("TS")} Generated icon types in ${chalk.green(outputPath)}`,
   );
   return file;
 }
@@ -287,14 +286,13 @@ async function writeIfChanged(filepath: string, newContent: string, message: str
       await fs.writeFile(filepath, newContent, "utf8");
       console.log(message);
     }
-  } catch (e) {
+  } catch (_e) {
     // File doesn't exist yet
     await fs.writeFile(filepath, newContent, "utf8");
     console.log(message);
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (maybeConfigs) => {
   const configs = Array.isArray(maybeConfigs) ? maybeConfigs : [maybeConfigs];
   const allSpriteSheetNames = configs.map((config) => config.fileName ?? "sprite.svg");

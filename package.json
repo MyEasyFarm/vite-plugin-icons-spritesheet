@@ -31,8 +31,9 @@
     "build:dev": "tsc --project tsconfig.build.json",
     "build:dev:watch": "tsc --project tsconfig.build.json --watch",
     "dev": "npm-run-all -s build:dev -p remix:dev build:dev:watch",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "format": "biome format --write .",
     "prepublishOnly": "npm run build",
     "tsc": "tsc",
     "validate": "npm run lint && npm run tsc && npm run test",
@@ -67,6 +68,7 @@
     "vite": ">=5.2.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.6",
     "@types/node": "^24.7.2",
     "husky": "^9.1.7",
     "npm-run-all2": "^8.0.4",
