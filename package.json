@@ -55,10 +55,12 @@
     "test-apps/*"
   ],
   "homepage": "https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet#readme",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.6",
     "chalk": "^5.4.1",
-    "glob": "^11.0.1",
     "tinyexec": "^0.3.2"
   },
   "peerDependencies": {

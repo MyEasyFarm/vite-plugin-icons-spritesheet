@@ -24,6 +24,7 @@ We extend our gratitude to the original author and contributors for creating thi
 
 - **ESM-only**: This package is published as ESM-only (no CommonJS support). Make sure your project supports ES modules. If you need CommonJS support, please use the original package.
 - **SVG formatting**: We don't attempt to format the output SVG file with Biome or Prettier, as neither tool supports SVG input. Applying HTML formatting to SVG files would be misusing these formatters, as they are not designed for this file type.
+- **Node.js >= 22 required**: This package uses Node.js native `globSync` API instead of the external glob package, which requires Node.js 22 or higher. If you have an older Node version, please use the original package.
 
 ## Installation
 ```bash

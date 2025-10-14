@@ -1,11 +1,10 @@
 /*eslint-disable no-console */
-import { promises as fs } from "node:fs";
+import { promises as fs, globSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { DOMParser, DOMImplementation, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
 import chalk from "chalk";
-import { glob } from "glob";
 import { exec } from "tinyexec";
 import type { Plugin } from "vite";
 import { normalizePath } from "vite";
@@ -72,7 +71,7 @@ const generateIcons = async ({
   const inputDirRelative = path.relative(cwdToUse, inputDir);
   const outputDirRelative = path.relative(cwdToUse, outputDir);
 
-  const files = glob.sync("**/*.svg", {
+  const files = globSync("**/*.svg", {
     cwd: inputDir,
   });
   if (files.length === 0) {
