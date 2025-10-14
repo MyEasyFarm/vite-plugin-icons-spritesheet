@@ -10,21 +10,21 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@react-router/node": "^7.1.5",
-    "react-router": "^7.1.5",
-    "@react-router/serve": "^7.1.5",
-    "isbot": "^5.1.22",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@react-router/node": "^7.9.4",
+    "react-router": "^7.9.4",
+    "@react-router/serve": "^7.9.4",
+    "isbot": "^5.1.31",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "@myeasyfarm/vite-plugin-icons-spritesheet": "*"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.1.5",
-    "@biomejs/biome": "^1.9.4",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.11",
+    "@react-router/dev": "^7.9.4",
+    "@biomejs/biome": "^2.2.6",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "engines": {
