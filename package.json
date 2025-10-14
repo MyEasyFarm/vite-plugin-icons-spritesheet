@@ -26,10 +26,10 @@
   "scripts": {
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "build": "tsup src/index.ts --dts --format esm --outDir dist --clean",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json",
     "remix:dev": "npm run dev -w test-apps/remix-vite",
-    "build:dev": "tsup src/index.ts --dts --format esm --outDir dist",
-    "build:dev:watch": "npm run build:dev -- --watch",
+    "build:dev": "tsc --project tsconfig.build.json",
+    "build:dev:watch": "tsc --project tsconfig.build.json --watch",
     "dev": "npm-run-all -s build:dev -p remix:dev build:dev:watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
@@ -70,7 +70,6 @@
     "@types/node": "^22.13.1",
     "husky": "^9.1.7",
     "npm-run-all2": "^8.0.4",
-    "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vite": "6.0.11"
   }
