@@ -20,6 +20,10 @@ This is a fork of the original [vite-plugin-icons-spritesheet](https://github.co
 
 We extend our gratitude to the original author and contributors for creating this excellent tool. This fork aims to build upon their work while keeping the library up-to-date and actively maintained.
 
+### Key Changes from Original
+
+- **ESM-only**: This package is published as ESM-only (no CommonJS support). Make sure your project supports ES modules. If you need CommonJS support, please use the original package.
+
 ## Installation
 ```bash
 npm install -D @myeasyfarm/vite-plugin-icons-spritesheet

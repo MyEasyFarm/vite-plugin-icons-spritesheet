@@ -1,10 +1,10 @@
 {
   "name": "@myeasyfarm/vite-plugin-icons-spritesheet",
   "version": "3.0.1",
+  "type": "module",
   "description": "Vite plugin that generates a spritesheet and types out of your icons folder.",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "types": "./dist/index.d.ts",
   "keywords": [
     "icons",
     "spritesheet",
@@ -18,30 +18,19 @@
   ],
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "import": "./dist/index.mjs",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js",
-        "require": "./dist/index.js",
-        "default": "./dist/index.js"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "build": "tsup src/index.ts  --dts --format esm,cjs --outDir dist --clean",
+    "build": "tsup src/index.ts --dts --format esm --outDir dist --clean",
     "remix:dev": "npm run dev -w test-apps/remix-vite",
-    "remix:cjs:dev": "npm run dev -w test-apps/remix-vite-cjs",
-    "build:dev": "tsup src/index.ts --dts --format cjs,esm  --outDir dist",
+    "build:dev": "tsup src/index.ts --dts --format esm --outDir dist",
     "build:dev:watch": "npm run build:dev -- --watch",
-    "build:dev:cjs:watch": "npm run build:dev -- --watch",
     "dev": "npm-run-all -s build:dev -p remix:dev build:dev:watch",
-    "dev:cjs": "npm-run-all -s build:dev -p remix:cjs:dev build:dev:cjs:watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "prepublishOnly": "npm run build",
