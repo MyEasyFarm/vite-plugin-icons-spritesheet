@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-icons-spritesheet",
+  "name": "@myeasyfarm/vite-plugin-icons-spritesheet",
   "version": "3.0.1",
   "description": "Vite plugin that generates a spritesheet and types out of your icons folder.",
   "main": "./dist/index.js",
@@ -53,10 +53,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/forge42dev/vite-plugin-icons-spritesheet.git"
+    "url": "git+https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet.git"
   },
   "bugs": {
-    "url": "https://github.com/forge42dev/vite-plugin-icons-spritesheet/issues"
+    "url": "https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet/issues"
   },
   "files": [
     "dist"
@@ -65,7 +65,7 @@
     ".",
     "test-apps/*"
   ],
-  "homepage": "https://github.com/forge42dev/vite-plugin-icons-spritesheet#readme",
+  "homepage": "https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet#readme",
   "dependencies": {
     "chalk": "^5.4.1",
     "glob": "^11.0.1",

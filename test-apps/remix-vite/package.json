@@ -16,7 +16,7 @@
     "isbot": "^5.1.22",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vite-plugin-icons-spritesheet": "*"
+    "@myeasyfarm/vite-plugin-icons-spritesheet": "*"
   },
   "devDependencies": {
     "@react-router/dev": "^7.1.5",

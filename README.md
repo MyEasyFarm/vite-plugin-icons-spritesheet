@@ -1,28 +1,34 @@
-![GitHub Repo stars](https://img.shields.io/github/stars/forge42dev/vite-plugin-icons-spritesheet?style=social)
-![npm](https://img.shields.io/npm/v/vite-plugin-icons-spritesheet?style=plastic)
-![GitHub](https://img.shields.io/github/license/forge42dev/vite-plugin-icons-spritesheet?style=plastic)
-![npm](https://img.shields.io/npm/dy/vite-plugin-icons-spritesheet?style=plastic) 
-![npm](https://img.shields.io/npm/dw/vite-plugin-icons-spritesheet?style=plastic) 
-![GitHub top language](https://img.shields.io/github/languages/top/forge42dev/vite-plugin-icons-spritesheet?style=plastic) 
+![GitHub Repo stars](https://img.shields.io/github/stars/MyEasyFarm/vite-plugin-icons-spritesheet?style=social)
+![npm](https://img.shields.io/npm/v/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
+![GitHub](https://img.shields.io/github/license/MyEasyFarm/vite-plugin-icons-spritesheet?style=plastic)
+![npm](https://img.shields.io/npm/dy/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
+![npm](https://img.shields.io/npm/dw/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
+![GitHub top language](https://img.shields.io/github/languages/top/MyEasyFarm/vite-plugin-icons-spritesheet?style=plastic)
 
-# vite-plugin-icons-spritesheet
+# @myeasyfarm/vite-plugin-icons-spritesheet
 A Vite plugin to generate a spritesheet with icons from a directory, re-runs on every edit/delete/add to the directory that is being watched.
 
 Optionally generates TypeScript types for the icon names that it outputs.
 
-If you want to learn more about this approach and it's benefits 
+If you want to learn more about this approach and it's benefits
 check it out here:
 https://www.jacobparis.com/content/svg-icons
 
+## About This Fork
+
+This is a fork of the original [vite-plugin-icons-spritesheet](https://github.com/forge42dev/vite-plugin-icons-spritesheet) project. The original maintainer is no longer actively developing the library and is not accepting pull requests. To ensure continued development, bug fixes, and new features, we have decided to maintain and develop this project separately under the `@myeasyfarm` scope.
+
+We extend our gratitude to the original author and contributors for creating this excellent tool. This fork aims to build upon their work while keeping the library up-to-date and actively maintained.
+
 ## Installation
 ```bash
-npm install -D vite-plugin-icons-spritesheet
+npm install -D @myeasyfarm/vite-plugin-icons-spritesheet
 ```
 
 ## Usage
 ```javascript
 // vite.config.js
-import { iconsSpritesheet } from 'vite-plugin-icons-spritesheet';
+import { iconsSpritesheet } from '@myeasyfarm/vite-plugin-icons-spritesheet';
 
 export default {
   plugins: [
@@ -52,7 +58,7 @@ export default {
 You can also pass an array of configs to the plugin to generate multiple spritesheets and types files at the same time (and watch those folders for changes).
 ```javascript
 // vite.config.js
-import { iconsSpritesheet } from 'vite-plugin-icons-spritesheet';
+import { iconsSpritesheet } from '@myeasyfarm/vite-plugin-icons-spritesheet';
 
 export default {
   plugins: [
