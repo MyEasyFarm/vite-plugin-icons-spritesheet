@@ -1,25 +1,29 @@
-name: Create GitHub Release
+name: Release and Publish
 on:
   push:
     tags:
       - 'v*'
 jobs:
-  create-release:
+  release-and-publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v5
-      - name: Create Release
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm run validate
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-
-          # Extract version from package.json
           VERSION=$(node -p "require('./package.json').version")
 
-          # Determine if this is a prerelease
           if [[ "$VERSION" == *"-"* ]]; then
             PRERELEASE="--prerelease"
           else
@@ -30,3 +34,6 @@ jobs:
             --title "$TAG_NAME" \
             --generate-notes \
             $PRERELEASE
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
