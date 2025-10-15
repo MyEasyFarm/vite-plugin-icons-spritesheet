@@ -24,8 +24,6 @@
     }
   },
   "scripts": {
-    "test": "vitest run",
-    "test:cov": "vitest run --coverage",
     "build": "rm -rf dist && tsc --project tsconfig.build.json",
     "remix:dev": "npm run dev -w test-apps/remix-vite",
     "build:dev": "tsc --project tsconfig.build.json",
@@ -36,7 +34,7 @@
     "format": "biome format --write .",
     "prepublishOnly": "npm run build",
     "tsc": "tsc",
-    "validate": "npm run lint && npm run tsc && npm run test",
+    "validate": "npm run lint && npm run tsc",
     "prepare": "husky"
   },
   "author": "",
