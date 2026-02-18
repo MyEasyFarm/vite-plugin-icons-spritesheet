@@ -48,7 +48,13 @@ interface PluginProps {
   iconNameTransformer?: (fileName: string) => string;
 }
 
-type ResolvedFormatter = { name: string; bin: string } | null;
+const FORMATTERS: Record<string, string[]> = {
+  prettier: ["--parser", "typescript"],
+  biome: ["format", "--stdin-file-path", "file.ts"],
+  oxfmt: ["--stdin-filepath", "file.ts"],
+};
+
+type ResolvedFormatter = { name: string; bin: string; options: string[] } | null;
 
 async function findBin(name: string, cwd: string): Promise<string | null> {
   let dir = cwd;
@@ -65,9 +71,9 @@ async function findBin(name: string, cwd: string): Promise<string | null> {
 }
 
 async function findFormatter(cwd: string): Promise<ResolvedFormatter> {
-  for (const name of ["prettier", "biome"]) {
+  for (const [name, options] of Object.entries(FORMATTERS)) {
     const bin = await findBin(name, cwd);
-    if (bin) return { name, bin };
+    if (bin) return { name, bin, options };
   }
   return null;
 }
@@ -211,10 +217,7 @@ async function lintFileContent(fileContent: string, formatter: ResolvedFormatter
     return fileContent;
   }
   return new Promise<string>((resolve) => {
-    const prettierOptions = ["--parser", "typescript"];
-    const biomeOptions = ["format", "--stdin-file-path", "file.ts"];
-    const options = formatter.name === "biome" ? biomeOptions : prettierOptions;
-    const { process } = exec(formatter.bin, options, {});
+    const { process } = exec(formatter.bin, formatter.options, {});
     if (!process?.stdin) {
       return resolve(fileContent);
     }
