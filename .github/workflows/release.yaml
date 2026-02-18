@@ -33,4 +33,11 @@ jobs:
             --title "$TAG_NAME" \
             --generate-notes \
             $PRERELEASE
-      - run: npm publish --access public
+      - name: Publish to npm
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *"-"* ]]; then
+            npm publish --access public --tag beta
+          else
+            npm publish --access public
+          fi
