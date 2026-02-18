@@ -1,14 +1,12 @@
 import { promises as fs, globSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
-import path from "node:path";
+import { access, constants, mkdir } from "node:fs/promises";
+import path, { dirname, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { DOMImplementation, DOMParser, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
 import chalk from "chalk";
 import { exec } from "tinyexec";
 import type { Plugin } from "vite";
 import { normalizePath } from "vite";
-
-type Formatter = "biome" | "prettier";
 
 interface PluginProps {
   /**
@@ -38,12 +36,6 @@ interface PluginProps {
    */
   fileName?: string;
   /**
-   * What formatter to use to format the generated files. Can be "biome" or "prettier"
-   * @default no formatter
-   * @example "biome"
-   */
-  formatter?: Formatter;
-  /**
    * The cwd, defaults to process.cwd()
    * @default process.cwd()
    */
@@ -56,17 +48,41 @@ interface PluginProps {
   iconNameTransformer?: (fileName: string) => string;
 }
 
+type ResolvedFormatter = { name: string; bin: string } | null;
+
+async function findBin(name: string, cwd: string): Promise<string | null> {
+  let dir = cwd;
+  while (true) {
+    const bin = resolve(dir, "node_modules", ".bin", name);
+    try {
+      await access(bin, constants.X_OK);
+      return bin;
+    } catch {}
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+async function findFormatter(cwd: string): Promise<ResolvedFormatter> {
+  for (const name of ["prettier", "biome"]) {
+    const bin = await findBin(name, cwd);
+    if (bin) return { name, bin };
+  }
+  return null;
+}
+
 const generateIcons = async ({
   withTypes = false,
   inputDir,
   outputDir,
   typesOutputFile = `${outputDir}/types.ts`,
   cwd,
-  formatter,
   fileName = "sprite.svg",
   iconNameTransformer = fileNameToCamelCase,
 }: PluginProps) => {
   const cwdToUse = cwd ?? process.cwd();
+  const formatter = await findFormatter(cwdToUse);
   const inputDirRelative = path.relative(cwdToUse, inputDir);
   const outputDirRelative = path.relative(cwdToUse, outputDir);
 
@@ -167,12 +183,7 @@ async function generateSvgSprite({
   outputPath: string;
   outputDirRelative?: string;
   iconNameTransformer: (fileName: string) => string;
-  /**
-   * What formatter to use to format the generated files. Can be "biome" or "prettier"
-   * @default no formatter
-   * @example "biome"
-   */
-  formatter?: Formatter;
+  formatter: ResolvedFormatter;
 }) {
   // Each SVG becomes a symbol, and we wrap them all in a single SVG
   const xmlDoc = new DOMImplementation().createDocument(NAMESPACE.SVG, "svg");
@@ -200,7 +211,7 @@ async function generateSvgSprite({
   );
 }
 
-async function lintFileContent(fileContent: string, formatter: Formatter | undefined, typeOfFile: "ts" | "svg") {
+async function lintFileContent(fileContent: string, formatter: ResolvedFormatter, typeOfFile: "ts" | "svg") {
   if (!formatter) {
     return fileContent;
   }
@@ -210,8 +221,8 @@ async function lintFileContent(fileContent: string, formatter: Formatter | undef
   return new Promise<string>((resolve) => {
     const prettierOptions = ["--parser", typeOfFile === "ts" ? "typescript" : "html"];
     const biomeOptions = ["format", "--stdin-file-path", `file.${typeOfFile}`];
-    const options = formatter === "biome" ? biomeOptions : prettierOptions;
-    const { process } = exec(formatter, options, {});
+    const options = formatter.name === "biome" ? biomeOptions : prettierOptions;
+    const { process } = exec(formatter.bin, options, {});
     if (!process?.stdin) {
       return resolve(fileContent);
     }
@@ -228,21 +239,21 @@ async function lintFileContent(fileContent: string, formatter: Formatter | undef
       errorOutput += data.toString();
     });
     process.on("error", (err) => {
-      console.error(`Error spawning formatter '${formatter}':`, err);
+      console.error(`Error spawning formatter '${formatter.name}':`, err);
       resolve(fileContent);
     });
     process.on("exit", (code) => {
       if (code === 0) {
         if (formattedContent.trim() === "") {
           if (errorOutput.trim() !== "") {
-            console.error(`Formatter '${formatter}' produced empty output. Stderr:`, errorOutput);
+            console.error(`Formatter '${formatter.name}' produced empty output. Stderr:`, errorOutput);
           }
           resolve(fileContent);
         } else {
           resolve(formattedContent);
         }
       } else {
-        console.error(`Formatter '${formatter}' exited with code ${code}. Stderr:`, errorOutput);
+        console.error(`Formatter '${formatter.name}' exited with code ${code}. Stderr:`, errorOutput);
         resolve(fileContent);
       }
     });
@@ -253,7 +264,7 @@ async function generateTypes({
   names,
   outputPath,
   formatter,
-}: { names: string[]; outputPath: string } & Pick<PluginProps, "formatter">) {
+}: { names: string[]; outputPath: string; formatter: ResolvedFormatter }) {
   const output = [
     "// This file is generated by icon spritesheet generator",
     "",
@@ -297,7 +308,7 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
   const configs = Array.isArray(maybeConfigs) ? maybeConfigs : [maybeConfigs];
   const allSpriteSheetNames = configs.map((config) => config.fileName ?? "sprite.svg");
   return configs.map((config, i) => {
-    const { withTypes, inputDir, outputDir, typesOutputFile, fileName, cwd, iconNameTransformer, formatter } = config;
+    const { withTypes, inputDir, outputDir, typesOutputFile, fileName, cwd, iconNameTransformer } = config;
     const iconGenerator = async () =>
       generateIcons({
         withTypes,
@@ -306,7 +317,6 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
         typesOutputFile,
         fileName,
         iconNameTransformer,
-        formatter,
       });
 
     const workDir = cwd ?? process.cwd();

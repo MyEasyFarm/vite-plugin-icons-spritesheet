@@ -24,6 +24,7 @@ We extend our gratitude to the original author and contributors for creating thi
 
 - **ESM-only**: This package is published as ESM-only (no CommonJS support). Make sure your project supports ES modules. If you need CommonJS support, please use the original package.
 - **SVG formatting**: We don't attempt to format the output SVG file with Biome or Prettier, as neither tool supports SVG input. Applying HTML formatting to SVG files would be misusing these formatters, as they are not designed for this file type.
+- **Auto-detected formatter**: The plugin automatically detects Prettier or Biome by walking up from the working directory looking for the binary in `node_modules/.bin/`. The manual `formatter` option has been removed.
 - **Node.js >= 22 required**: This package uses Node.js native `globSync` API instead of the external glob package, which requires Node.js 22 or higher. If you have an older Node version, please use the original package.
 
 ## Installation
@@ -51,8 +52,6 @@ export default {
       fileName: "icon.svg",
       // The cwd, defaults to process.cwd()
       cwd: process.cwd(),
-      // What formatter to use to format the generated files, prettier or biome, defaults to no formatter
-      formatter: "biome",
       // Callback function that is called when the script is generating the icon name
       // This is useful if you want to modify the icon name before it is written to the file
       iconNameTransformer: (iconName) => iconName
