@@ -1,6 +1,6 @@
 {
   "name": "@myeasyfarm/vite-plugin-icons-spritesheet",
-  "version": "4.0.0-beta.5",
+  "version": "4.0.0-beta.6",
   "type": "module",
   "description": "Vite plugin that generates a spritesheet and types out of your icons folder.",
   "main": "./dist/index.js",
