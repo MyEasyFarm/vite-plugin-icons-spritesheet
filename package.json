@@ -58,9 +58,9 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@xmldom/xmldom": "^0.9.6",
+    "@xmldom/xmldom": "^0.9.8",
     "chalk": "^5.6.2",
-    "tinyexec": "^1.0.1"
+    "tinyexec": "^1.0.2"
   },
   "peerDependencies": {
     "vite": ">=5.2.0"
@@ -71,6 +71,6 @@
     "husky": "^9.1.7",
     "npm-run-all2": "^8.0.4",
     "typescript": "^5.9.3",
-    "vite": "7.1.10"
+    "vite": "7.3.1"
   }
 }

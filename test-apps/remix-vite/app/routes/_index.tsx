@@ -1,5 +1,4 @@
-import type { LinksFunction } from "react-router";
-import type { MetaFunction } from "react-router";
+import type { LinksFunction, MetaFunction } from "react-router";
 // Import and test your package
 import sprite from "../icons/sprite.svg";
 
