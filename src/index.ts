@@ -101,7 +101,6 @@ const generateIcons = async ({
     outputPath: path.join(outputDir, fileName),
     outputDirRelative,
     iconNameTransformer,
-    formatter,
   });
 
   if (withTypes) {
@@ -176,14 +175,12 @@ async function generateSvgSprite({
   outputPath,
   outputDirRelative,
   iconNameTransformer,
-  formatter,
 }: {
   files: string[];
   inputDir: string;
   outputPath: string;
   outputDirRelative?: string;
   iconNameTransformer: (fileName: string) => string;
-  formatter: ResolvedFormatter;
 }) {
   // Each SVG becomes a symbol, and we wrap them all in a single SVG
   const xmlDoc = new DOMImplementation().createDocument(NAMESPACE.SVG, "svg");
@@ -202,25 +199,20 @@ async function generateSvgSprite({
   const xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
   const xmlString = xmlDoc.toString();
   const output = [xmlDeclaration, xmlString, ""].join("\n");
-  const formattedOutput = await lintFileContent(output, formatter, "svg");
-
   return writeIfChanged(
     outputPath,
-    formattedOutput,
+    output,
     `🖼️  Generated SVG spritesheet in ${chalk.green(outputDirRelative)}`,
   );
 }
 
-async function lintFileContent(fileContent: string, formatter: ResolvedFormatter, typeOfFile: "ts" | "svg") {
+async function lintFileContent(fileContent: string, formatter: ResolvedFormatter) {
   if (!formatter) {
     return fileContent;
   }
-  if (typeOfFile === "svg") {
-    return fileContent;
-  }
   return new Promise<string>((resolve) => {
-    const prettierOptions = ["--parser", typeOfFile === "ts" ? "typescript" : "html"];
-    const biomeOptions = ["format", "--stdin-file-path", `file.${typeOfFile}`];
+    const prettierOptions = ["--parser", "typescript"];
+    const biomeOptions = ["format", "--stdin-file-path", "file.ts"];
     const options = formatter.name === "biome" ? biomeOptions : prettierOptions;
     const { process } = exec(formatter.bin, options, {});
     if (!process?.stdin) {
@@ -276,7 +268,7 @@ async function generateTypes({
     "export type IconName = typeof iconNames[number]",
     "",
   ].join("\n");
-  const formattedOutput = await lintFileContent(output, formatter, "ts");
+  const formattedOutput = await lintFileContent(output, formatter);
 
   const file = await writeIfChanged(
     outputPath,
