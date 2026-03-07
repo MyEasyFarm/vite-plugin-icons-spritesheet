@@ -59,7 +59,6 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.8",
-    "chalk": "^5.6.2",
     "tinyexec": "^1.0.2"
   },
   "peerDependencies": {

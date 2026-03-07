@@ -2,8 +2,8 @@ import { promises as fs, globSync } from "node:fs";
 import { access, constants, mkdir } from "node:fs/promises";
 import path, { dirname, resolve } from "node:path";
 import { Readable } from "node:stream";
+import { styleText } from "node:util";
 import { DOMImplementation, DOMParser, MIME_TYPE, NAMESPACE, Node } from "@xmldom/xmldom";
-import chalk from "chalk";
 import { exec } from "tinyexec";
 import type { Plugin } from "vite";
 import { normalizePath } from "vite";
@@ -96,7 +96,7 @@ const generateIcons = async ({
     cwd: inputDir,
   });
   if (files.length === 0) {
-    console.log(`⚠️  No SVG files found in ${chalk.red(inputDirRelative)}`);
+    console.log(`⚠️  No SVG files found in ${styleText("red", inputDirRelative)}`);
     return;
   }
 
@@ -205,7 +205,11 @@ async function generateSvgSprite({
   const xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
   const xmlString = xmlDoc.toString();
   const output = [xmlDeclaration, xmlString, ""].join("\n");
-  return writeIfChanged(outputPath, output, `🖼️  Generated SVG spritesheet in ${chalk.green(outputDirRelative)}`);
+  return writeIfChanged(
+    outputPath,
+    output,
+    `🖼️  Generated SVG spritesheet in ${styleText("green", outputDirRelative ?? "")}`,
+  );
 }
 
 async function lintFileContent(fileContent: string, formatter: ResolvedFormatter) {
@@ -276,7 +280,7 @@ async function generateTypes({
   const file = await writeIfChanged(
     outputPath,
     formattedOutput,
-    `${chalk.blueBright("TS")} Generated icon types in ${chalk.green(outputPath)}`,
+    `${styleText("blueBright", "TS")} Generated icon types in ${styleText("green", outputPath)}`,
   );
   return file;
 }
