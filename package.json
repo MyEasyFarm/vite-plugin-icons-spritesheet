@@ -6,6 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "keywords": [
+    "vite-plugin",
     "icons",
     "spritesheet",
     "vite",
@@ -53,6 +54,13 @@
     ".",
     "test-apps/*"
   ],
+  "compatiblePackages": {
+    "schemaVersion": 1,
+    "vite": {
+      "type": "compatible",
+      "versions": ">=5.2.0"
+    }
+  },
   "homepage": "https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet#readme",
   "engines": {
     "node": ">=22"

@@ -1,5 +1,6 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/MyEasyFarm/vite-plugin-icons-spritesheet?style=social)
 ![npm](https://img.shields.io/npm/v/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
+![Vite compatibility](https://registry.vite.dev/api/badges?package=@myeasyfarm/vite-plugin-icons-spritesheet&tool=vite)
 ![GitHub](https://img.shields.io/github/license/MyEasyFarm/vite-plugin-icons-spritesheet?style=plastic)
 ![npm](https://img.shields.io/npm/dy/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
 ![npm](https://img.shields.io/npm/dw/@myeasyfarm/vite-plugin-icons-spritesheet?style=plastic)
