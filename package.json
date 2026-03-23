@@ -26,16 +26,14 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.json",
-    "remix:dev": "npm run dev -w test-apps/remix-vite",
-    "build:dev": "tsc --project tsconfig.build.json",
-    "build:dev:watch": "tsc --project tsconfig.build.json --watch",
-    "dev": "npm-run-all -s build:dev -p remix:dev build:dev:watch",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
     "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run build",
     "tsc": "tsc",
-    "validate": "npm run lint && npm run tsc",
+    "validate": "npm run lint && npm run tsc && npm run test",
     "prepare": "husky"
   },
   "author": "",
@@ -49,10 +47,6 @@
   },
   "files": [
     "dist"
-  ],
-  "workspaces": [
-    ".",
-    "test-apps/*"
   ],
   "compatiblePackages": {
     "schemaVersion": 1,
@@ -76,8 +70,8 @@
     "@biomejs/biome": "^2.2.6",
     "@types/node": "^24.7.2",
     "husky": "^9.1.7",
-    "npm-run-all2": "^8.0.4",
     "typescript": "^5.9.3",
-    "vite": "7.3.1"
+    "vite": "7.3.1",
+    "vitest": "^3.2.1"
   }
 }

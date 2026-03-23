@@ -115,3 +115,11 @@ Component usage:
 ```jsx
 <Icon name="plus" />
 ```
+
+## Development
+
+```bash
+npm test           # run tests
+npm run test:watch # run tests in watch mode
+npm run validate   # lint + typecheck + tests
+```

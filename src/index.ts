@@ -8,7 +8,7 @@ import { exec } from "tinyexec";
 import type { Plugin } from "vite";
 import { normalizePath } from "vite";
 
-interface PluginProps {
+export interface PluginProps {
   /**
    * Should the plugin generate TypeScript types for the icon names
    * @default false
@@ -78,7 +78,7 @@ async function findFormatter(cwd: string): Promise<ResolvedFormatter> {
   return null;
 }
 
-const generateIcons = async ({
+export const generateIcons = async ({
   withTypes = false,
   inputDir,
   outputDir,
@@ -100,7 +100,7 @@ const generateIcons = async ({
     return;
   }
 
-  await mkdir(outputDirRelative, { recursive: true });
+  await mkdir(outputDir, { recursive: true });
   await generateSvgSprite({
     files,
     inputDir,
@@ -112,9 +112,8 @@ const generateIcons = async ({
   if (withTypes) {
     const typesOutputDir = path.dirname(typesOutputFile);
     const typesFile = path.basename(typesOutputFile);
-    const typesOutputDirRelative = path.relative(cwdToUse, typesOutputDir);
 
-    await mkdir(typesOutputDirRelative, { recursive: true });
+    await mkdir(typesOutputDir, { recursive: true });
     await generateTypes({
       names: files.map((file: string) => transformIconName(file, iconNameTransformer)),
       outputPath: path.join(typesOutputDir, typesFile),
@@ -128,7 +127,7 @@ const transformIconName = (fileName: string, transformer: (iconName: string) => 
   return transformer(iconName);
 };
 
-function fileNameToCamelCase(fileName: string): string {
+export function fileNameToCamelCase(fileName: string): string {
   const words = fileName.split("-");
   const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   return capitalizedWords.join("");
@@ -315,6 +314,7 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
         outputDir,
         typesOutputFile,
         fileName,
+        cwd,
         iconNameTransformer,
       });
 

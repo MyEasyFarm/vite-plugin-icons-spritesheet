@@ -21,10 +21,7 @@ Please mark relevant options with an `x` in the brackets.
 Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also
 list any relevant details for your test configuration
 
-- [ ] Integration tests
-- [ ] Unit tests
-- [ ] Manual tests
-- [ ] No tests required
+- [ ] Integration tests pass (`npm test`)
 
 # Reviewer checklist
 
