@@ -51,7 +51,9 @@ export default {
       cwd: process.cwd(),
       // Callback function that is called when the script is generating the icon name
       // This is useful if you want to modify the icon name before it is written to the file
-      iconNameTransformer: (iconName) => iconName
+      iconNameTransformer: (iconName) => iconName,
+      // Detect unused icons during `vite build`: "warn" logs to console, "error" fails the build
+      unused: "warn"
     }),
   ],
 };
@@ -107,6 +109,24 @@ Component usage:
 ```jsx
 <Icon name="plus" />
 ```
+
+## Unused icon detection
+
+Set `unused: "warn"` to get warnings about icons that are never referenced in your source code during `vite build`. Set `unused: "error"` to fail the build instead.
+
+```
+⚠️  Unused icons:
+   - OldIcon
+   - DeprecatedIcon
+   2 of 15 icons appear unused.
+```
+
+The plugin scans all transformed modules for string literals matching icon names. It also detects:
+
+- **`iconNames` array imports** — if any module imports or re-exports the `iconNames` array, all icons are marked as used (since the array could be iterated dynamically).
+- **Dynamic usage** — if a module imports from the types file but contains no icon name literals, the warning is qualified with "(dynamic usage detected, may be inaccurate)".
+
+Limitations: detection is static and string-based. Icons constructed dynamically at runtime (e.g., from API responses or template literal interpolation) cannot be detected. The feature only runs during `vite build`, not in dev mode.
 
 ## Comparison with alternatives
 

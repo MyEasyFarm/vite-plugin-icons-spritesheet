@@ -37,6 +37,16 @@ export interface PluginProps {
    * @example (iconName) => iconName.replace("potato", "mash-em,boil-em,put-em-in-a-stew")
    */
   iconNameTransformer?: (fileName: string) => string;
+  /**
+   * Detect icons in the spritesheet that are not referenced in any source file during `vite build`.
+   * - `"warn"` — logs unused icons to the console
+   * - `"error"` — fails the build if unused icons are found
+   */
+  unused?: "warn" | "error";
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const FORMATTERS: Record<string, string[]> = {
@@ -87,8 +97,10 @@ export const generateIcons = async ({
   });
   if (files.length === 0) {
     console.log(`⚠️  No SVG files found in ${styleText("red", inputDirRelative)}`);
-    return;
+    return [];
   }
+
+  const names = files.map((file: string) => transformIconName(file, iconNameTransformer));
 
   await mkdir(outputDir, { recursive: true });
   await generateSvgSprite({
@@ -105,11 +117,13 @@ export const generateIcons = async ({
 
     await mkdir(typesOutputDir, { recursive: true });
     await generateTypes({
-      names: files.map((file: string) => transformIconName(file, iconNameTransformer)),
+      names,
       outputPath: path.join(typesOutputDir, typesFileName),
       formatter,
     });
   }
+
+  return names;
 };
 
 const transformIconName = (fileName: string, transformer: (iconName: string) => string) => {
@@ -296,8 +310,8 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
   const configs = Array.isArray(maybeConfigs) ? maybeConfigs : [maybeConfigs];
   const allOutputFiles = configs.map((config) => config.outputFile);
   return configs.map((config, i) => {
-    const { inputDir, outputFile, typesFile, cwd, iconNameTransformer } = config;
-    const iconGenerator = async () =>
+    const { inputDir, outputFile, typesFile, cwd, iconNameTransformer, unused } = config;
+    const iconGenerator = async (): Promise<string[]> =>
       generateIcons({
         inputDir,
         outputFile,
@@ -307,10 +321,82 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
       });
 
     const workDir = cwd ?? process.cwd();
+    const typesFileNormalized = typesFile ? normalizePath(path.resolve(workDir, typesFile)) : null;
+    const outputFileNormalized = normalizePath(path.resolve(workDir, outputFile));
+
+    let allIconNames: string[] = [];
+    const usedIconNames = new Set<string>();
+    let iconNamePattern: RegExp | null = null;
+    let isBuildMode = false;
+    let hasDynamicUsage = false;
+
     return {
       name: `icon-spritesheet-generator${i > 0 ? i.toString() : ""}`,
+      configResolved(resolved) {
+        isBuildMode = resolved.command === "build";
+      },
       async buildStart() {
-        await iconGenerator();
+        const names = await iconGenerator();
+        if (unused && names.length > 0) {
+          allIconNames = names;
+          usedIconNames.clear();
+          hasDynamicUsage = false;
+          const escaped = names.map(escapeRegExp);
+          iconNamePattern = new RegExp(`(["'\`])(${escaped.join("|")})\\1`, "g");
+        }
+      },
+      transform(code, id) {
+        if (!unused || !isBuildMode || allIconNames.length === 0) return;
+
+        const nid = normalizePath(id).replace(/\?.*$/, "");
+        if (
+          nid.includes("/node_modules/") ||
+          nid.endsWith(".svg") ||
+          nid === outputFileNormalized ||
+          nid === typesFileNormalized
+        ) {
+          return;
+        }
+
+        if (typesFileNormalized) {
+          const typesBase = path.basename(typesFileNormalized).replace(/\.\w+$/, "");
+          if (new RegExp(`from\\s+["'](?:[^"']*/)?${escapeRegExp(typesBase)}(?:\\.\\w+)?["']`).test(code)) {
+            if (/(?:^|[\n;])\s*(?:import|export)\s+\{[^}]*\b(?<!type\s)iconNames\b[^}]*\}\s+from\s/m.test(code)) {
+              for (const n of allIconNames) usedIconNames.add(n);
+              return;
+            }
+            if (iconNamePattern) {
+              iconNamePattern.lastIndex = 0;
+              if (!iconNamePattern.test(code)) hasDynamicUsage = true;
+            }
+          }
+        }
+
+        if (iconNamePattern) {
+          iconNamePattern.lastIndex = 0;
+          for (const m of code.matchAll(iconNamePattern)) {
+            usedIconNames.add(m[2]);
+          }
+        }
+      },
+      buildEnd(error) {
+        if (error || !unused || !isBuildMode || allIconNames.length === 0) return;
+
+        const unusedIcons = allIconNames.filter((n) => !usedIconNames.has(n));
+        if (unusedIcons.length === 0) return;
+
+        const label = configs.length > 1 ? ` (${inputDir})` : "";
+        const qualifier = hasDynamicUsage ? " (dynamic usage detected, may be inaccurate)" : "";
+        const message =
+          `\n${styleText("yellow", `⚠️  Unused icons${qualifier}`)}${label}:\n` +
+          `${unusedIcons.map((n) => `   - ${styleText("dim", n)}`).join("\n")}\n` +
+          `   ${styleText("dim", `${unusedIcons.length} of ${allIconNames.length} icons appear unused.`)}\n`;
+
+        if (unused === "error") {
+          this.error(message);
+        } else {
+          console.log(message);
+        }
       },
       async watchChange(file, type) {
         const inputPath = normalizePath(path.join(workDir, inputDir));
