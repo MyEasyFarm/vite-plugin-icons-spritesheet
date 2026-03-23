@@ -52,7 +52,7 @@
     "schemaVersion": 1,
     "vite": {
       "type": "compatible",
-      "versions": ">=5.2.0"
+      "versions": "^5.2.0 || ^6.0.0 || ^7.0.0"
     }
   },
   "homepage": "https://github.com/MyEasyFarm/vite-plugin-icons-spritesheet#readme",
@@ -64,7 +64,7 @@
     "tinyexec": "^1.0.2"
   },
   "peerDependencies": {
-    "vite": ">=5.2.0"
+    "vite": "^5.2.0 || ^6.0.0 || ^7.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.6",
