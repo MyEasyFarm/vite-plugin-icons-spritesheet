@@ -108,6 +108,10 @@ Component usage:
 <Icon name="plus" />
 ```
 
+## Comparison with alternatives
+
+See [COMPARISON.md](./COMPARISON.md) for a detailed breakdown of how this plugin compares to other Vite SVG sprite plugins.
+
 ## Development
 
 ```bash
