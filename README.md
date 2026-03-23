@@ -41,16 +41,12 @@ import { iconsSpritesheet } from '@myeasyfarm/vite-plugin-icons-spritesheet';
 export default {
   plugins: [
      iconsSpritesheet({
-      // Defaults to false, should it generate TS types for you
-      withTypes: true,
       // The path to the icon directory
       inputDir: "icons",
-      // Output path for the generated spritesheet and types
-      outputDir: "public/icons",
-      // Output path for the generated type file, defaults to types.ts in outputDir
-      typesOutputFile: "app/icons.ts",
-      // The name of the generated spritesheet, defaults to sprite.svg
-      fileName: "icon.svg",
+      // Output path for the generated spritesheet file
+      outputFile: "public/icons/icon.svg",
+      // When set, generates TypeScript types at this path
+      typesFile: "app/icons.ts",
       // The cwd, defaults to process.cwd()
       cwd: process.cwd(),
       // Callback function that is called when the script is generating the icon name
@@ -69,19 +65,15 @@ import { iconsSpritesheet } from '@myeasyfarm/vite-plugin-icons-spritesheet';
 export default {
   plugins: [
      iconsSpritesheet([
-      { 
-        withTypes: true, 
-        inputDir: "icons/subset1", 
-        outputDir: "public/icons1", 
-        typesOutputFile: "app/icons1.ts", 
-        fileName: "icon1.svg", 
+      {
+        inputDir: "icons/subset1",
+        outputFile: "public/icons1/icon1.svg",
+        typesFile: "app/icons1.ts",
       },
-      { 
-        withTypes: true, 
+      {
         inputDir: "icons/subset2",
-        outputDir: "public/icons2", 
-        typesOutputFile: "app/icons2.ts", 
-        fileName: "icon2.svg", 
+        outputFile: "public/icons2/icon2.svg",
+        typesFile: "app/icons2.ts",
       },
     ]),
   ],

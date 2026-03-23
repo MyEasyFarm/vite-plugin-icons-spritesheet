@@ -10,31 +10,22 @@ import { normalizePath } from "vite";
 
 export interface PluginProps {
   /**
-   * Should the plugin generate TypeScript types for the icon names
-   * @default false
-   */
-  withTypes?: boolean;
-  /**
-   * The path to the icon directory
+   * The path to the input icon directory
    * @example "./icons"
    */
   inputDir: string;
   /**
-   * Output path for the generated
-   * @example "./public/icons"
+   * Output path for the generated spritesheet file
+   * @example "./public/icons/sprite.svg"
    */
-  outputDir: string;
+  outputFile: string;
   /**
-   * Output path for the generated type file
-   * @example "./app/types.ts"
+   * Output path for the generated TypeScript type file.
+   * When set, the plugin generates an `iconNames` array and `IconName` union type.
+   * When omitted, no type file is generated.
+   * @example "./app/icons.ts"
    */
-  typesOutputFile?: string;
-  /**
-   * The name of the generated spritesheet
-   * @default sprite.svg
-   * @example "icon.svg"
-   */
-  fileName?: string;
+  typesFile?: string;
   /**
    * The cwd, defaults to process.cwd()
    * @default process.cwd()
@@ -79,17 +70,16 @@ async function findFormatter(cwd: string): Promise<ResolvedFormatter> {
 }
 
 export const generateIcons = async ({
-  withTypes = false,
   inputDir,
-  outputDir,
-  typesOutputFile = `${outputDir}/types.ts`,
+  outputFile,
+  typesFile,
   cwd,
-  fileName = "sprite.svg",
   iconNameTransformer = fileNameToCamelCase,
 }: PluginProps) => {
   const cwdToUse = cwd ?? process.cwd();
   const formatter = await findFormatter(cwdToUse);
   const inputDirRelative = path.relative(cwdToUse, inputDir);
+  const outputDir = path.dirname(outputFile);
   const outputDirRelative = path.relative(cwdToUse, outputDir);
 
   const files = globSync("**/*.svg", {
@@ -104,19 +94,19 @@ export const generateIcons = async ({
   await generateSvgSprite({
     files,
     inputDir,
-    outputPath: path.join(outputDir, fileName),
+    outputPath: outputFile,
     outputDirRelative,
     iconNameTransformer,
   });
 
-  if (withTypes) {
-    const typesOutputDir = path.dirname(typesOutputFile);
-    const typesFile = path.basename(typesOutputFile);
+  if (typesFile) {
+    const typesOutputDir = path.dirname(typesFile);
+    const typesFileName = path.basename(typesFile);
 
     await mkdir(typesOutputDir, { recursive: true });
     await generateTypes({
       names: files.map((file: string) => transformIconName(file, iconNameTransformer)),
-      outputPath: path.join(typesOutputDir, typesFile),
+      outputPath: path.join(typesOutputDir, typesFileName),
       formatter,
     });
   }
@@ -304,16 +294,14 @@ async function writeIfChanged(filepath: string, newContent: string, message: str
 
 export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (maybeConfigs) => {
   const configs = Array.isArray(maybeConfigs) ? maybeConfigs : [maybeConfigs];
-  const allSpriteSheetNames = configs.map((config) => config.fileName ?? "sprite.svg");
+  const allOutputFiles = configs.map((config) => config.outputFile);
   return configs.map((config, i) => {
-    const { withTypes, inputDir, outputDir, typesOutputFile, fileName, cwd, iconNameTransformer } = config;
+    const { inputDir, outputFile, typesFile, cwd, iconNameTransformer } = config;
     const iconGenerator = async () =>
       generateIcons({
-        withTypes,
         inputDir,
-        outputDir,
-        typesOutputFile,
-        fileName,
+        outputFile,
+        typesFile,
         cwd,
         iconNameTransformer,
       });
@@ -348,8 +336,8 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
         const limit = typeof config.build.assetsInlineLimit === "number" ? config.build.assetsInlineLimit : undefined;
 
         const assetsInlineLimitFunction = (name: string, content: Buffer) => {
-          const isSpriteSheet = allSpriteSheetNames.some((spriteSheetName) => {
-            return name.endsWith(normalizePath(`${outputDir}/${spriteSheetName}`));
+          const isSpriteSheet = allOutputFiles.some((outputFilePath) => {
+            return name.endsWith(normalizePath(outputFilePath));
           });
           // Our spritesheet? Early return
           if (isSpriteSheet) {
