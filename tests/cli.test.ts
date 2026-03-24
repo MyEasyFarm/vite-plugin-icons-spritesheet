@@ -8,7 +8,7 @@ import { generateIcons } from "../src/index.js";
 
 const execFileAsync = promisify(execFile);
 const FIXTURES_DIR = path.resolve(import.meta.dirname, "fixtures/icons");
-const CLI_PATH = path.resolve(import.meta.dirname, "../dist/cli.js");
+const CLI_PATH = path.resolve(import.meta.dirname, "../src/cli.ts");
 
 async function createTsProject(tmpDir: string, sourceFiles: Record<string, string>): Promise<void> {
   await writeFile(
