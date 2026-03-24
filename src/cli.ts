@@ -31,7 +31,7 @@ try {
 }
 
 const allIconNames: string[] = [];
-for (const match of content.matchAll(/"([^"]+)"/g)) {
+for (const match of content.matchAll(/["']([^"']+)["']/g)) {
   // Only capture strings inside the iconNames array block
   if (content.indexOf("iconNames") === -1) break;
   allIconNames.push(match[1]);
@@ -41,7 +41,7 @@ for (const match of content.matchAll(/"([^"]+)"/g)) {
 const arrayMatch = content.match(/iconNames\s*=\s*\[([^\]]*)\]/s);
 if (arrayMatch) {
   allIconNames.length = 0;
-  for (const m of arrayMatch[1].matchAll(/"([^"]+)"/g)) {
+  for (const m of arrayMatch[1].matchAll(/["']([^"']+)["']/g)) {
     allIconNames.push(m[1]);
   }
 }
