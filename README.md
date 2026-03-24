@@ -113,11 +113,15 @@ Component usage:
 The package ships with a standalone CLI command to detect icons that are never referenced in your source code.
 
 ```bash
-npx icons-unused --typesFile ./app/icons.ts
+# Auto-detects typesFile from your Vite config
+npx icons-unused
+
+# Or specify explicitly
+npx icons-unused --types-file ./app/icons.ts
 ```
 
 Options:
-- `--typesFile <path>` (required) — path to the generated TypeScript types file
+- `--types-file <path>` (optional) — path to the generated TypeScript types file. When omitted, the CLI reads your Vite config and extracts `typesFile` from the plugin options automatically. If multiple plugin configs are found, all are checked.
 - `--cwd <dir>` (optional) — working directory, defaults to `process.cwd()`
 - `--error` (optional) — exit with code 1 if unused icons are found (useful in CI)
 

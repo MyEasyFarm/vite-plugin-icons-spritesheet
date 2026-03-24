@@ -312,7 +312,7 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
 
     const workDir = cwd ?? process.cwd();
 
-    return {
+    const plugin = {
       name: `icon-spritesheet-generator${i > 0 ? i.toString() : ""}`,
       async buildStart() {
         await iconGenerator();
@@ -363,5 +363,6 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
         config.build.assetsInlineLimit = assetsInlineLimitFunction;
       },
     } satisfies Plugin<unknown>;
+    return { ...plugin, __iconSpritesheetConfig: { inputDir, outputFile, typesFile, cwd } };
   });
 };

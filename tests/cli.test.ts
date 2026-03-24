@@ -60,7 +60,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
     expect(stdout).toContain("Unused icons");
     expect(stdout).not.toContain("- Circle");
     expect(stdout).toContain("Multi");
@@ -74,7 +74,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
     expect(stdout).toContain("All icons are used");
   });
 
@@ -87,7 +87,7 @@ describe("icons-unused CLI", () => {
     });
 
     try {
-      await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir, "--error"]);
+      await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
       expect.fail("should have exited with code 1");
     } catch (err: any) {
       expect(err.code).toBe(1);
@@ -103,11 +103,11 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir, "--error"]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
     expect(stdout).toContain("All icons are used");
   });
 
-  it("exits with code 2 when --typesFile is missing", async () => {
+  it("exits with code 2 when --types-file is missing", async () => {
     try {
       await execFileAsync("node", [CLI_PATH]);
       expect.fail("should have exited with code 2");
@@ -125,7 +125,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
     expect(stdout).toContain("Unused icons");
     expect(stdout).toContain("7 of 7");
   });
@@ -157,7 +157,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
     expect(stdout).toContain("Unused icons");
     expect(stdout).not.toContain("- Circle");
     expect(stdout).toContain("6 of 7");
@@ -173,7 +173,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
     expect(stdout).toContain("Unused icons");
     expect(stdout).not.toContain("- Circle");
     expect(stdout).toContain("Multi");
