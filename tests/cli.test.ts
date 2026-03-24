@@ -1,0 +1,148 @@
+import { execFile } from "node:child_process";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { generateIcons } from "../src/index.js";
+
+const execFileAsync = promisify(execFile);
+const FIXTURES_DIR = path.resolve(import.meta.dirname, "fixtures/icons");
+const CLI_PATH = path.resolve(import.meta.dirname, "../dist/cli.js");
+
+async function createTsProject(tmpDir: string, sourceFiles: Record<string, string>): Promise<void> {
+  await writeFile(
+    path.join(tmpDir, "tsconfig.json"),
+    JSON.stringify({
+      compilerOptions: {
+        target: "ESNext",
+        module: "ESNext",
+        moduleResolution: "Bundler",
+        strict: true,
+        noEmit: true,
+      },
+      include: ["./**/*.ts", "./**/*.tsx"],
+    }),
+  );
+  for (const [name, content] of Object.entries(sourceFiles)) {
+    const filePath = path.join(tmpDir, name);
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, content);
+  }
+}
+
+describe("icons-unused CLI", () => {
+  let tmpDir: string;
+  let inputDir: string;
+  let outputDir: string;
+  let outputFile: string;
+  let typesFile: string;
+
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(path.join(tmpdir(), "icons-cli-test-"));
+    inputDir = path.join(tmpDir, "icons");
+    outputDir = path.join(tmpDir, "output");
+    outputFile = path.join(outputDir, "sprite.svg");
+    typesFile = path.join(outputDir, "icons.ts");
+    await cp(FIXTURES_DIR, inputDir, { recursive: true });
+    await generateIcons({ inputDir, outputFile, typesFile, cwd: tmpDir });
+  });
+
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it("reports unused icons", async () => {
+    await createTsProject(tmpDir, {
+      "app/component.ts": `
+        import type { IconName } from "../output/icons";
+        const icon: IconName = "Circle";
+      `,
+    });
+
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    expect(stdout).toContain("Unused icons");
+    expect(stdout).not.toContain("- Circle");
+    expect(stdout).toContain("Multi");
+  });
+
+  it("reports all icons used", async () => {
+    await createTsProject(tmpDir, {
+      "app/component.ts": `
+        import type { IconName } from "../output/icons";
+        const icons: IconName[] = ["Circle", "Empty", "Multi", "Namespace", "Polygon", "Version", "Width"];
+      `,
+    });
+
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    expect(stdout).toContain("All icons are used");
+  });
+
+  it("exits with code 1 when --error is set and icons are unused", async () => {
+    await createTsProject(tmpDir, {
+      "app/component.ts": `
+        import type { IconName } from "../output/icons";
+        const icon: IconName = "Circle";
+      `,
+    });
+
+    try {
+      await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir, "--error"]);
+      expect.fail("should have exited with code 1");
+    } catch (err: any) {
+      expect(err.code).toBe(1);
+      expect(err.stdout).toContain("Unused icons");
+    }
+  });
+
+  it("exits with code 0 when --error is set and all icons are used", async () => {
+    await createTsProject(tmpDir, {
+      "app/component.ts": `
+        import type { IconName } from "../output/icons";
+        const icons: IconName[] = ["Circle", "Empty", "Multi", "Namespace", "Polygon", "Version", "Width"];
+      `,
+    });
+
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir, "--error"]);
+    expect(stdout).toContain("All icons are used");
+  });
+
+  it("exits with code 2 when --typesFile is missing", async () => {
+    try {
+      await execFileAsync("node", [CLI_PATH]);
+      expect.fail("should have exited with code 2");
+    } catch (err: any) {
+      expect(err.code).toBe(2);
+      expect(err.stderr).toContain("Usage:");
+    }
+  });
+
+  it("does not false-positive on untyped string literals", async () => {
+    await createTsProject(tmpDir, {
+      "app/unrelated.ts": `
+        const label = "Circle";
+        const description = "This is a Multi-line thing";
+      `,
+    });
+
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    expect(stdout).toContain("Unused icons");
+    expect(stdout).toContain("7 of 7");
+  });
+
+  it("detects icons used via template literals in typed positions", async () => {
+    await createTsProject(tmpDir, {
+      "app/flags.ts": `
+        import type { IconName } from "../output/icons";
+        type Suffix = "ircle" | "olygon";
+        declare const s: Suffix;
+        const icon: IconName = \`C\${s}\`;
+      `,
+    });
+
+    const { stdout } = await execFileAsync("node", [CLI_PATH, "--typesFile", typesFile, "--cwd", tmpDir]);
+    expect(stdout).toContain("Unused icons");
+    expect(stdout).not.toContain("- Circle");
+    expect(stdout).toContain("Multi");
+  });
+});

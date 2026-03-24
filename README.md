@@ -52,8 +52,6 @@ export default {
       // Callback function that is called when the script is generating the icon name
       // This is useful if you want to modify the icon name before it is written to the file
       iconNameTransformer: (iconName) => iconName,
-      // Detect unused icons during `vite build`: "warn" logs to console, "error" fails the build
-      unused: "warn"
     }),
   ],
 };
@@ -112,7 +110,18 @@ Component usage:
 
 ## Unused icon detection
 
-Set `unused: "warn"` to get warnings about icons that are never referenced in your source code during `vite build`. Set `unused: "error"` to fail the build instead.
+The package ships with a standalone CLI command to detect icons that are never referenced in your source code.
+
+```bash
+npx icons-unused --typesFile ./app/icons.ts
+```
+
+Options:
+- `--typesFile <path>` (required) — path to the generated TypeScript types file
+- `--cwd <dir>` (optional) — working directory, defaults to `process.cwd()`
+- `--error` (optional) — exit with code 1 if unused icons are found (useful in CI)
+
+Example output:
 
 ```
 ⚠️  Unused icons:
@@ -121,12 +130,9 @@ Set `unused: "warn"` to get warnings about icons that are never referenced in yo
    2 of 15 icons appear unused.
 ```
 
-The plugin scans all transformed modules for string literals matching icon names. It also detects:
+The command uses the TypeScript compiler to perform type-aware analysis. It detects icon names used in typed positions (assignments, function arguments, JSX props), comparisons, switch/case statements, and computed template literals. Untyped string literals that happen to match icon names are not counted as usage.
 
-- **`iconNames` array imports** — if any module imports or re-exports the `iconNames` array, all icons are marked as used (since the array could be iterated dynamically).
-- **Dynamic usage** — if a module imports from the types file but contains no icon name literals, the warning is qualified with "(dynamic usage detected, may be inaccurate)".
-
-Limitations: detection is static and string-based. Icons constructed dynamically at runtime (e.g., from API responses or template literal interpolation) cannot be detected. The feature only runs during `vite build`, not in dev mode.
+Requirements: `typescript` must be installed as a dependency, and a `tsconfig.json` must be present in the working directory.
 
 ## Comparison with alternatives
 
