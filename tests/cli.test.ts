@@ -1,10 +1,11 @@
+import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import { promisify } from "node:util";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { generateIcons } from "../src/index.js";
+import { generateIcons } from "../src/index.ts";
 
 const execFileAsync = promisify(execFile);
 const FIXTURES_DIR = path.resolve(import.meta.dirname, "fixtures/icons");
@@ -61,9 +62,9 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
-    expect(stdout).toContain("Unused icons");
-    expect(stdout).not.toContain("- Circle");
-    expect(stdout).toContain("Multi");
+    assert.ok(stdout.includes("Unused icons"), "should report unused icons");
+    assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
+    assert.ok(stdout.includes("Multi"), "Multi should be listed as unused");
   });
 
   it("reports all icons used", async () => {
@@ -75,7 +76,7 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
-    expect(stdout).toContain("All icons are used");
+    assert.ok(stdout.includes("All icons are used"), "should report all icons used");
   });
 
   it("exits with code 1 when --error is set and icons are unused", async () => {
@@ -88,10 +89,10 @@ describe("icons-unused CLI", () => {
 
     try {
       await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
-      expect.fail("should have exited with code 1");
+      assert.fail("should have exited with code 1");
     } catch (err: any) {
-      expect(err.code).toBe(1);
-      expect(err.stdout).toContain("Unused icons");
+      assert.strictEqual(err.code, 1);
+      assert.ok(err.stdout.includes("Unused icons"), "should report unused icons on error exit");
     }
   });
 
@@ -104,16 +105,16 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
-    expect(stdout).toContain("All icons are used");
+    assert.ok(stdout.includes("All icons are used"), "should report all icons used");
   });
 
   it("exits with code 2 when --types-file is missing", async () => {
     try {
       await execFileAsync("node", [CLI_PATH]);
-      expect.fail("should have exited with code 2");
+      assert.fail("should have exited with code 2");
     } catch (err: any) {
-      expect(err.code).toBe(2);
-      expect(err.stderr).toContain("Usage:");
+      assert.strictEqual(err.code, 2);
+      assert.ok(err.stderr.includes("Usage:"), "should print usage on missing args");
     }
   });
 
@@ -126,8 +127,8 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
-    expect(stdout).toContain("Unused icons");
-    expect(stdout).toContain("7 of 7");
+    assert.ok(stdout.includes("Unused icons"), "should report unused icons");
+    assert.ok(stdout.includes("7 of 7"), "all 7 icons should be unused");
   });
 
   it("parses types file with single-quoted icon names", async () => {
@@ -158,9 +159,9 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
-    expect(stdout).toContain("Unused icons");
-    expect(stdout).not.toContain("- Circle");
-    expect(stdout).toContain("6 of 7");
+    assert.ok(stdout.includes("Unused icons"), "should report unused icons");
+    assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
+    assert.ok(stdout.includes("6 of 7"), "6 of 7 icons should be unused");
   });
 
   it("detects icons used via template literals in typed positions", async () => {
@@ -174,8 +175,8 @@ describe("icons-unused CLI", () => {
     });
 
     const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
-    expect(stdout).toContain("Unused icons");
-    expect(stdout).not.toContain("- Circle");
-    expect(stdout).toContain("Multi");
+    assert.ok(stdout.includes("Unused icons"), "should report unused icons");
+    assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
+    assert.ok(stdout.includes("Multi"), "Multi should be listed as unused");
   });
 });
