@@ -25,10 +25,13 @@ describe("generateIcons", () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  it("generates a spritesheet with symbol elements", async () => {
+  const genSprite = async (): Promise<string> => {
     await generateIcons({ inputDir, outputFile, cwd: tmpDir });
+    return readFile(path.join(outputDir, "sprite.svg"), "utf8");
+  };
 
-    const sprite = await readFile(path.join(outputDir, "sprite.svg"), "utf8");
+  it("generates a spritesheet with symbol elements", async () => {
+    const sprite = await genSprite();
     assert.ok(sprite.includes('<?xml version="1.0" encoding="UTF-8"?>'), "missing XML declaration");
     assert.ok(sprite.includes("<defs>"), "missing <defs>");
     assert.ok(sprite.includes("<symbol"), "missing <symbol>");
@@ -36,18 +39,14 @@ describe("generateIcons", () => {
   });
 
   it("uses PascalCase for symbol IDs by default", async () => {
-    await generateIcons({ inputDir, outputFile, cwd: tmpDir });
-
-    const sprite = await readFile(path.join(outputDir, "sprite.svg"), "utf8");
+    const sprite = await genSprite();
     assert.ok(sprite.includes('id="Circle"'), 'missing id="Circle"');
     assert.ok(sprite.includes('id="Multi"'), 'missing id="Multi"');
     assert.ok(sprite.includes('id="Polygon"'), 'missing id="Polygon"');
   });
 
   it("excludes xmlns, xmlns:xlink, version, width, height from symbols but preserves viewBox", async () => {
-    await generateIcons({ inputDir, outputFile, cwd: tmpDir });
-
-    const sprite = await readFile(path.join(outputDir, "sprite.svg"), "utf8");
+    const sprite = await genSprite();
 
     // The root <svg> has width/height, but symbols should not
     const symbols = sprite.split("<symbol");
@@ -66,17 +65,13 @@ describe("generateIcons", () => {
   });
 
   it("produces a symbol for empty SVG (no children, no attributes)", async () => {
-    await generateIcons({ inputDir, outputFile, cwd: tmpDir });
-
-    const sprite = await readFile(path.join(outputDir, "sprite.svg"), "utf8");
+    const sprite = await genSprite();
     // empty.svg is <svg></svg> — parses fine, produces a symbol with id but no children
     assert.ok(sprite.includes('id="Empty"'), 'missing id="Empty"');
   });
 
   it("handles SVGs with xlink namespace", async () => {
-    await generateIcons({ inputDir, outputFile, cwd: tmpDir });
-
-    const sprite = await readFile(path.join(outputDir, "sprite.svg"), "utf8");
+    const sprite = await genSprite();
     assert.ok(sprite.includes('id="Namespace"'), 'missing id="Namespace"');
     // The use element from namespace.svg should be preserved as a child
     assert.ok(sprite.includes("xlink:href"), "missing xlink:href");

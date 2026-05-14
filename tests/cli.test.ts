@@ -53,15 +53,21 @@ describe("icons-unused CLI", () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  it("reports unused icons", async () => {
-    await createTsProject(tmpDir, {
+  const runCli = (extraArgs: string[] = []) =>
+    execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, ...extraArgs]);
+
+  const singleCircleProject = () =>
+    createTsProject(tmpDir, {
       "app/component.ts": `
         import type { IconName } from "../output/icons";
         const icon: IconName = "Circle";
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
+  it("reports unused icons", async () => {
+    await singleCircleProject();
+
+    const { stdout } = await runCli();
     assert.ok(stdout.includes("Unused icons"), "should report unused icons");
     assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
     assert.ok(stdout.includes("Multi"), "Multi should be listed as unused");
@@ -75,20 +81,15 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await runCli();
     assert.ok(stdout.includes("All icons are used"), "should report all icons used");
   });
 
   it("exits with code 1 when --error is set and icons are unused", async () => {
-    await createTsProject(tmpDir, {
-      "app/component.ts": `
-        import type { IconName } from "../output/icons";
-        const icon: IconName = "Circle";
-      `,
-    });
+    await singleCircleProject();
 
     try {
-      await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
+      await runCli(["--error"]);
       assert.fail("should have exited with code 1");
     } catch (err: any) {
       assert.strictEqual(err.code, 1);
@@ -104,7 +105,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir, "--error"]);
+    const { stdout } = await runCli(["--error"]);
     assert.ok(stdout.includes("All icons are used"), "should report all icons used");
   });
 
@@ -126,7 +127,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await runCli();
     assert.ok(stdout.includes("Unused icons"), "should report unused icons");
     assert.ok(stdout.includes("7 of 7"), "all 7 icons should be unused");
   });
@@ -151,14 +152,9 @@ describe("icons-unused CLI", () => {
     ].join("\n");
     await writeFile(typesFile, singleQuoteTypes);
 
-    await createTsProject(tmpDir, {
-      "app/component.ts": `
-        import type { IconName } from "../output/icons";
-        const icon: IconName = "Circle";
-      `,
-    });
+    await singleCircleProject();
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await runCli();
     assert.ok(stdout.includes("Unused icons"), "should report unused icons");
     assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
     assert.ok(stdout.includes("6 of 7"), "6 of 7 icons should be unused");
@@ -174,7 +170,7 @@ describe("icons-unused CLI", () => {
       `,
     });
 
-    const { stdout } = await execFileAsync("node", [CLI_PATH, "--types-file", typesFile, "--cwd", tmpDir]);
+    const { stdout } = await runCli();
     assert.ok(stdout.includes("Unused icons"), "should report unused icons");
     assert.ok(!stdout.includes("- Circle"), "Circle should not be listed as unused");
     assert.ok(stdout.includes("Multi"), "Multi should be listed as unused");
