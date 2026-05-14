@@ -63,8 +63,8 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@xmldom/xmldom": "^0.9.9",
-    "tinyexec": "^1.0.2"
+    "@xmldom/xmldom": "^0.9.10",
+    "tinyexec": "^1.1.2"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0",
@@ -76,10 +76,10 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.6",
-    "@types/node": "^24.7.2",
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^24.12.4",
     "husky": "^9.1.7",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
   }
 }
