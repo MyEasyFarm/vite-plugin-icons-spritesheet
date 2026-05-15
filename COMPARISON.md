@@ -13,6 +13,7 @@ There are several Vite plugins for SVG sprite generation, each taking a differen
 | [vite-plugin-svg-spritemap](https://github.com/g-makarov/vite-plugin-svg-spritemap) (g-makarov) | External file | ❌ | ✅ | ✅ Active |
 | [vite-plugin-svg-spritesheet](https://github.com/imjasonmiller/vite-plugin-svg-spritesheet) (imjasonmiller) | External file | ✅ Union / enum | ✅ | ✅ Active |
 | [vite-awesome-svg-loader](https://github.com/matafokka/vite-awesome-svg-loader) | Inline DOM | ❌ | ✅ | ✅ Active (LGPL) |
+| [vite-plugin-magical-svg](https://github.com/cyyynthia/vite-plugin-magical-svg) | Component import → external sprite at build | ❌ | ✅ | ✅ Active (BSD-3) |
 
 ### Inline DOM injection
 
@@ -37,3 +38,9 @@ However, it does not generate TypeScript types for icon names.
 ### SVG loader (different paradigm)
 
 [vite-awesome-svg-loader](https://github.com/matafokka/vite-awesome-svg-loader) is not a sprite generator but a full SVG loader with five import modes (source, URL, data URI, base64, sprite). It includes built-in React/Vue components with `size`/`color` props and stroke-width preservation. The sprite mode injects symbols into the DOM (inline, not external). Licensed under LGPL-2.1.
+
+### Component imports backed by a sprite (SVGR-style)
+
+[vite-plugin-magical-svg](https://github.com/cyyynthia/vite-plugin-magical-svg) is closer to SVGR than to a sprite generator: `import MySvg from './icon.svg'` returns a framework component (target: `dom`, `react`, `preact`, `vue`, `solid`, `ember`, …). The sprite is an implementation detail — bundled at build, embedded inline during dev for HMR. Imported icons are tree-shaken and nested asset refs (`<image href>`, `<use href>`) are recursively bundled. SVGO on by default. No TS type generation since icons are referenced by import binding, not by name. BSD-3-Clause.
+
+Pick it if you want one import per icon and bundler-driven sprite contents; pick this plugin if you prefer a directory-driven model with `<use href="sprite.svg#icon-name">` and a typed `IconName` union.
