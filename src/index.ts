@@ -127,7 +127,21 @@ export function fileNameToCamelCase(fileName: string): string {
   return capitalizedWords.join("");
 }
 
-const EXCLUDED_ATTRIBUTES = ["xmlns", "xmlns:xlink", "version", "width", "height"];
+function makeAssetsInlineLimit(
+  allOutputFiles: string[],
+  limit: number | undefined,
+  subFunc: ((name: string, content: Buffer) => boolean | undefined) | undefined,
+): (name: string, content: Buffer) => boolean | undefined {
+  return (name: string, content: Buffer) => {
+    const isSpriteSheet = allOutputFiles.some((outputFilePath) => name.endsWith(normalizePath(outputFilePath)));
+    if (isSpriteSheet) return false;
+    if (limit) return content.byteLength <= limit;
+    if (typeof subFunc === "function") return subFunc(name, content);
+    return undefined;
+  };
+}
+
+const EXCLUDED_ATTRIBUTES = new Set(["xmlns", "xmlns:xlink", "version", "width", "height"]);
 const parser = new DOMParser();
 function parseSvg(input: string) {
   try {
@@ -142,7 +156,7 @@ async function createSvgSymbol(file: string, inputDir: string, iconNameTransform
   const input = await fs.readFile(path.join(inputDir, file), "utf8");
 
   const root = parseSvg(input);
-  if (!root || !root.ownerDocument) {
+  if (!root?.ownerDocument) {
     console.log(`⚠️ No SVG tag found in ${file}`);
     return;
   }
@@ -159,7 +173,7 @@ async function createSvgSymbol(file: string, inputDir: string, iconNameTransform
   }
 
   for (const attr of svg.attributes) {
-    if (!EXCLUDED_ATTRIBUTES.includes(attr.name)) {
+    if (!EXCLUDED_ATTRIBUTES.has(attr.name)) {
       symbol.setAttribute(attr.name, attr.value);
     }
   }
@@ -283,17 +297,15 @@ async function generateTypes({
  * so only write if the content has changed
  */
 async function writeIfChanged(filepath: string, newContent: string, message: string) {
+  let currentContent: string | undefined;
   try {
-    const currentContent = await fs.readFile(filepath, "utf8");
-    if (currentContent !== newContent) {
-      await fs.writeFile(filepath, newContent, "utf8");
-      console.log(message);
-    }
-  } catch (_e) {
-    // File doesn't exist yet
-    await fs.writeFile(filepath, newContent, "utf8");
-    console.log(message);
+    currentContent = await fs.readFile(filepath, "utf8");
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
   }
+  if (currentContent === newContent) return;
+  await fs.writeFile(filepath, newContent, "utf8");
+  console.log(message);
 }
 
 export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (maybeConfigs) => {
@@ -340,27 +352,7 @@ export const iconsSpritesheet: (args: PluginProps | PluginProps[]) => any = (may
           typeof config.build.assetsInlineLimit === "function" ? config.build.assetsInlineLimit : undefined;
         const limit = typeof config.build.assetsInlineLimit === "number" ? config.build.assetsInlineLimit : undefined;
 
-        const assetsInlineLimitFunction = (name: string, content: Buffer) => {
-          const isSpriteSheet = allOutputFiles.some((outputFilePath) => {
-            return name.endsWith(normalizePath(outputFilePath));
-          });
-          // Our spritesheet? Early return
-          if (isSpriteSheet) {
-            return false;
-          }
-          // User defined limit? Check if it's smaller than the limit
-          if (limit) {
-            const size = content.byteLength;
-            return size <= limit;
-          }
-          // User defined function? Run it
-          if (typeof subFunc === "function") {
-            return subFunc(name, content);
-          }
-
-          return undefined;
-        };
-        config.build.assetsInlineLimit = assetsInlineLimitFunction;
+        config.build.assetsInlineLimit = makeAssetsInlineLimit(allOutputFiles, limit, subFunc);
       },
     } satisfies Plugin<unknown>;
     return { ...plugin, __iconSpritesheetConfig: { inputDir, outputFile, typesFile, cwd } };

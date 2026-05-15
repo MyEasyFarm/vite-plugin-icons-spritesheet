@@ -60,7 +60,7 @@ describe("generateIcons", () => {
     }
 
     // circle.svg has viewBox — it should be preserved on its symbol
-    const circleSymbol = sprite.match(/<symbol[^>]*id="Circle"[^>]*>/)?.[0];
+    const circleSymbol = /<symbol[^>]*id="Circle"[^>]*>/.exec(sprite)?.[0];
     assert.ok(circleSymbol?.includes('viewBox="0 0 100 100"'), "Circle symbol missing viewBox");
   });
 
@@ -144,6 +144,12 @@ describe("generateIcons", () => {
     await assert.rejects(readFile(path.join(outputDir, "sprite.svg"), "utf8"));
   });
 
+  it("generates output when no prior file exists (ENOENT path)", async () => {
+    await generateIcons({ inputDir, outputFile, cwd: tmpDir });
+    const sprite = await readFile(outputFile, "utf8");
+    assert.ok(sprite.includes("<symbol"));
+  });
+
   it("does not write file again when content has not changed", async () => {
     await generateIcons({ inputDir, outputFile, cwd: tmpDir });
 
@@ -179,6 +185,40 @@ describe("iconsSpritesheet", () => {
     assert.strictEqual(plugins.length, 2);
     assert.strictEqual(plugins[0].name, "icon-spritesheet-generator");
     assert.strictEqual(plugins[1].name, "icon-spritesheet-generator1");
+  });
+
+  it("config() hook produces an assetsInlineLimit covering sprite, limit, and subFunc paths", () => {
+    let subFuncCalls = 0;
+    const subFunc = (_n: string, _c: Buffer) => {
+      subFuncCalls += 1;
+      return true;
+    };
+    const plugins = iconsSpritesheet([{ inputDir: "icons", outputFile: "output/sprite.svg" }]);
+    const fakeConfig: any = { build: { assetsInlineLimit: 4096 } };
+    (plugins[0] as any).config(fakeConfig);
+    const limitFn = fakeConfig.build.assetsInlineLimit;
+    assert.strictEqual(typeof limitFn, "function");
+    assert.strictEqual(limitFn("dist/assets/output/sprite.svg", Buffer.alloc(10)), false);
+    assert.strictEqual(limitFn("dist/assets/other.png", Buffer.alloc(10)), true); // 10 <= 4096
+    assert.strictEqual(limitFn("dist/assets/other.png", Buffer.alloc(8192)), false); // 8192 > 4096
+
+    const fakeConfig2: any = { build: { assetsInlineLimit: subFunc } };
+    (plugins[0] as any).config(fakeConfig2);
+    fakeConfig2.build.assetsInlineLimit("dist/other.png", Buffer.alloc(10));
+    assert.strictEqual(subFuncCalls, 1);
+  });
+
+  it("config() hook captures all outputFiles across multiple configs", () => {
+    const plugins = iconsSpritesheet([
+      { inputDir: "icons1", outputFile: "output1/sprite.svg" },
+      { inputDir: "icons2", outputFile: "output2/sprite.svg" },
+    ]);
+    const fakeConfig: any = { build: {} };
+    (plugins[0] as any).config(fakeConfig);
+    const limitFn = fakeConfig.build.assetsInlineLimit;
+    assert.strictEqual(limitFn("dist/assets/output1/sprite.svg", Buffer.alloc(10)), false);
+    assert.strictEqual(limitFn("dist/assets/output2/sprite.svg", Buffer.alloc(10)), false);
+    assert.strictEqual(limitFn("dist/assets/other.png", Buffer.alloc(10)), undefined);
   });
 });
 
