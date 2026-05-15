@@ -24,14 +24,8 @@ async function getTypesFilesFromViteConfig(cwd: string): Promise<string[]> {
   const typesFiles: string[] = [];
 
   for (const plugin of plugins) {
-    if (
-      plugin &&
-      typeof plugin === "object" &&
-      "name" in plugin &&
-      (plugin as any).name?.startsWith("icon-spritesheet-generator") &&
-      (plugin as any).__iconSpritesheetConfig?.typesFile
-    ) {
-      typesFiles.push((plugin as any).__iconSpritesheetConfig.typesFile);
+    if (plugin?.name?.startsWith("icon-spritesheet-generator") && plugin.__iconSpritesheetConfig?.typesFile) {
+      typesFiles.push(plugin.__iconSpritesheetConfig.typesFile);
     }
   }
 
@@ -52,7 +46,7 @@ async function checkTypesFile(typesFilePath: string): Promise<{ unused: string[]
   const allIconNames: string[] = [];
 
   // Extract only strings between `iconNames = [` and `] as const`
-  const arrayMatch = content.match(/iconNames\s*=\s*\[([^\]]*)\]/s);
+  const arrayMatch = /iconNames\s*=\s*\[([^\]]*)\]/s.exec(content);
   if (arrayMatch) {
     for (const m of arrayMatch[1].matchAll(/["']([^"']+)["']/g)) {
       allIconNames.push(m[1]);
@@ -102,10 +96,10 @@ for (const typesFile of typesFiles) {
 
   hasUnused = true;
 
-  const message =
-    `\n${styleText("yellow", `⚠️  Unused icons${label}`)}:\n` +
-    `${unused.map((n) => `   - ${styleText("dim", n)}`).join("\n")}\n` +
-    `   ${styleText("dim", `${unused.length} of ${total} icons appear unused.`)}\n`;
+  const header = styleText("yellow", `⚠️  Unused icons${label}`);
+  const bulletList = unused.map((n) => `   - ${styleText("dim", n)}`).join("\n");
+  const footer = styleText("dim", `${unused.length} of ${total} icons appear unused.`);
+  const message = ["", `${header}:`, bulletList, `   ${footer}`, ""].join("\n");
 
   console.log(message);
 }
