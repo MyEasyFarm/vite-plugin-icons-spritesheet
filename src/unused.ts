@@ -65,70 +65,130 @@ export async function findUnusedIcons(options: {
     ) {
       continue;
     }
-
-    // Walk all string literals and check contextual type, with fallback to widened type
-    const walk = (node: import("typescript").Node) => {
-      if (ts.isStringLiteral(node) && iconNameSet.has(node.text)) {
-        // Primary: contextual type (typed assignments, function args, JSX props)
-        const contextualType = checker.getContextualType(node);
-        if (contextualType && isIconNameRelated(contextualType, iconNameSet)) {
-          usedIcons.add(node.text);
-        } else {
-          // Fallback: check the actual type of the literal node itself.
-          // When a string literal appears in a context where TS narrows it to
-          // a member of the IconName union (comparisons, switch/case, generics),
-          // getTypeAtLocation returns the narrow literal type whose parent union
-          // we can trace back to IconName.
-          const nodeType = checker.getTypeAtLocation(node);
-          if (nodeType.isStringLiteral() && iconNameSet.has(nodeType.value)) {
-            // Verify the parent expression expects an IconName-related type
-            const parent = node.parent;
-            if (parent) {
-              // For comparison expressions like `icon === "Circle"`, check the other operand
-              if (
-                ts.isBinaryExpression(parent) &&
-                (parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken ||
-                  parent.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken ||
-                  parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken ||
-                  parent.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsToken)
-              ) {
-                const other = parent.left === node ? parent.right : parent.left;
-                const otherType = checker.getTypeAtLocation(other);
-                if (isIconNameRelated(otherType, iconNameSet)) {
-                  usedIcons.add(node.text);
-                }
-              }
-              // For case clauses: switch(x) { case "Circle": } — check the switch expression
-              if (ts.isCaseClause(parent) && ts.isCaseBlock(parent.parent)) {
-                const switchStmt = parent.parent.parent;
-                if (ts.isSwitchStatement(switchStmt)) {
-                  const switchType = checker.getTypeAtLocation(switchStmt.expression);
-                  if (isIconNameRelated(switchType, iconNameSet)) {
-                    usedIcons.add(node.text);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      // Check template expressions: `Flag${capitalize(locale)}` resolves to "FlagEn" | "FlagFr" | ...
-      // Use getTypeAtLocation (computed type) not getContextualType (expected type),
-      // because contextual type returns the full IconName union, marking everything used.
-      if (ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
-        const type = checker.getTypeAtLocation(node);
-        if (type) {
-          for (const name of extractIconNames(type, iconNameSet)) {
-            usedIcons.add(name);
-          }
-        }
-      }
-      ts.forEachChild(node, walk);
-    };
-    walk(sourceFile);
+    collectUsedIcons(sourceFile, checker, ts, iconNameSet, usedIcons);
   }
 
   return options.allIconNames.filter((n) => !usedIcons.has(n));
+}
+
+/**
+ * Walks the source file's AST and records every IconName-typed string usage
+ * into `usedIcons` (mutated in place).
+ */
+function collectUsedIcons(
+  sourceFile: import("typescript").SourceFile,
+  checker: import("typescript").TypeChecker,
+  ts: typeof import("typescript"),
+  iconNameSet: Set<string>,
+  usedIcons: Set<string>,
+): void {
+  const visit = (node: import("typescript").Node): void => {
+    if (ts.isStringLiteral(node) && iconNameSet.has(node.text)) {
+      const contextMatched = recordIfContextualMatch(node, checker, iconNameSet, usedIcons);
+      if (!contextMatched) {
+        const nodeType = checker.getTypeAtLocation(node);
+        if (nodeType.isStringLiteral() && iconNameSet.has(nodeType.value) && node.parent) {
+          recordIfBinaryComparison(node, node.parent, checker, iconNameSet, usedIcons, ts);
+          recordIfCaseClause(node, node.parent, checker, iconNameSet, usedIcons, ts);
+        }
+      }
+    }
+    if (ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      recordTemplateMatches(node, checker, iconNameSet, usedIcons);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+}
+
+/**
+ * Primary path: if the string literal's contextual type is IconName-related,
+ * record it as used.
+ * @modifies usedIcons on match
+ * @returns true iff the icon was recorded via this path (caller skips fallback).
+ */
+function recordIfContextualMatch(
+  node: import("typescript").StringLiteral,
+  checker: import("typescript").TypeChecker,
+  iconNameSet: Set<string>,
+  usedIcons: Set<string>,
+): boolean {
+  const contextualType = checker.getContextualType(node);
+  if (contextualType && isIconNameRelated(contextualType, iconNameSet)) {
+    usedIcons.add(node.text);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Fallback path: handles `icon === "Circle"` style comparisons by checking the
+ * other operand's type.
+ * @modifies usedIcons on match
+ */
+function recordIfBinaryComparison(
+  node: import("typescript").StringLiteral,
+  parent: import("typescript").Node,
+  checker: import("typescript").TypeChecker,
+  iconNameSet: Set<string>,
+  usedIcons: Set<string>,
+  ts: typeof import("typescript"),
+): void {
+  if (!ts.isBinaryExpression(parent)) return;
+  const kind = parent.operatorToken.kind;
+  const isComparison =
+    kind === ts.SyntaxKind.EqualsEqualsEqualsToken ||
+    kind === ts.SyntaxKind.ExclamationEqualsEqualsToken ||
+    kind === ts.SyntaxKind.EqualsEqualsToken ||
+    kind === ts.SyntaxKind.ExclamationEqualsToken;
+  if (!isComparison) return;
+  const other = parent.left === node ? parent.right : parent.left;
+  const otherType = checker.getTypeAtLocation(other);
+  if (isIconNameRelated(otherType, iconNameSet)) {
+    usedIcons.add(node.text);
+  }
+}
+
+/**
+ * Fallback path: handles `switch (x) { case "Circle": }` by checking the
+ * switch expression's type.
+ * @modifies usedIcons on match
+ */
+function recordIfCaseClause(
+  node: import("typescript").StringLiteral,
+  parent: import("typescript").Node,
+  checker: import("typescript").TypeChecker,
+  iconNameSet: Set<string>,
+  usedIcons: Set<string>,
+  ts: typeof import("typescript"),
+): void {
+  if (!ts.isCaseClause(parent) || !ts.isCaseBlock(parent.parent)) return;
+  const switchStmt = parent.parent.parent;
+  if (!ts.isSwitchStatement(switchStmt)) return;
+  const switchType = checker.getTypeAtLocation(switchStmt.expression);
+  if (isIconNameRelated(switchType, iconNameSet)) {
+    usedIcons.add(node.text);
+  }
+}
+
+/**
+ * Records every icon-name literal contained in a template expression's
+ * computed type (e.g. `` `Flag${Locale}` `` → `"FlagEn" | "FlagFr"`).
+ * Uses getTypeAtLocation (computed type) not getContextualType (expected type),
+ * because contextual type returns the full IconName union, marking everything used.
+ * @modifies usedIcons on match
+ */
+function recordTemplateMatches(
+  node: import("typescript").TemplateExpression | import("typescript").NoSubstitutionTemplateLiteral,
+  checker: import("typescript").TypeChecker,
+  iconNameSet: Set<string>,
+  usedIcons: Set<string>,
+): void {
+  const type = checker.getTypeAtLocation(node);
+  if (!type) return;
+  for (const name of extractIconNames(type, iconNameSet)) {
+    usedIcons.add(name);
+  }
 }
 
 function extractIconNames(type: import("typescript").Type, iconNameSet: Set<string>): string[] {
