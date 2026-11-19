@@ -136,7 +136,7 @@ Example output:
 
 The command uses the TypeScript compiler to perform type-aware analysis. It detects icon names used in typed positions (assignments, function arguments, JSX props), comparisons, switch/case statements, and computed template literals. Untyped string literals that happen to match icon names are not counted as usage.
 
-Requirements: `typescript` must be installed as a dependency, and a `tsconfig.json` must be present in the working directory.
+Requirements: `typescript` 5.x, 6.x or 7.1+ must be installed as a dependency (7.0 is not supported: its API lives under `typescript/unstable/*`), and a `tsconfig.json` must be present in the working directory.
 
 ## Comparison with alternatives
 

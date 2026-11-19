@@ -1,18 +1,11 @@
 import path from "node:path";
+import type { UnusedIconsOptions } from "./unused.ts";
 
-export async function findUnusedIcons(options: {
-  typesFile: string;
-  allIconNames: string[];
-  cwd: string;
-}): Promise<string[]> {
-  let ts: typeof import("typescript");
-  try {
-    ts = await import("typescript");
-  } catch {
-    console.warn("⚠️  `icons-unused` requires `typescript` to be installed — skipping detection");
-    return [];
-  }
-
+/**
+ * In-process compiler API of TypeScript 5–6. `ts` is the user's own `typescript`
+ * module; `typescript-legacy` is a dev-only alias used for types alone.
+ */
+export function findUnusedIconsLegacy(ts: typeof import("typescript-legacy"), options: UnusedIconsOptions): string[] {
   const configPath = ts.findConfigFile(options.cwd, ts.sys.fileExists, "tsconfig.json");
   if (!configPath) {
     console.warn("⚠️  No tsconfig.json found — skipping unused icon detection");
@@ -42,7 +35,7 @@ export async function findUnusedIcons(options: {
     return [];
   }
 
-  let iconNameType: import("typescript").Type | undefined;
+  let iconNameType: import("typescript-legacy").Type | undefined;
   ts.forEachChild(typesSourceFile, (node) => {
     if (ts.isTypeAliasDeclaration(node) && node.name.text === "IconName") {
       iconNameType = checker.getTypeAtLocation(node);
@@ -76,13 +69,13 @@ export async function findUnusedIcons(options: {
  * into `usedIcons` (mutated in place).
  */
 function collectUsedIcons(
-  sourceFile: import("typescript").SourceFile,
-  checker: import("typescript").TypeChecker,
-  ts: typeof import("typescript"),
+  sourceFile: import("typescript-legacy").SourceFile,
+  checker: import("typescript-legacy").TypeChecker,
+  ts: typeof import("typescript-legacy"),
   iconNameSet: Set<string>,
   usedIcons: Set<string>,
 ): void {
-  const visit = (node: import("typescript").Node): void => {
+  const visit = (node: import("typescript-legacy").Node): void => {
     if (ts.isStringLiteral(node) && iconNameSet.has(node.text)) {
       const contextMatched = recordIfContextualMatch(node, checker, iconNameSet, usedIcons);
       if (!contextMatched) {
@@ -108,8 +101,8 @@ function collectUsedIcons(
  * @returns true iff the icon was recorded via this path (caller skips fallback).
  */
 function recordIfContextualMatch(
-  node: import("typescript").StringLiteral,
-  checker: import("typescript").TypeChecker,
+  node: import("typescript-legacy").StringLiteral,
+  checker: import("typescript-legacy").TypeChecker,
   iconNameSet: Set<string>,
   usedIcons: Set<string>,
 ): boolean {
@@ -127,12 +120,12 @@ function recordIfContextualMatch(
  * @modifies usedIcons on match
  */
 function recordIfBinaryComparison(
-  node: import("typescript").StringLiteral,
-  parent: import("typescript").Node,
-  checker: import("typescript").TypeChecker,
+  node: import("typescript-legacy").StringLiteral,
+  parent: import("typescript-legacy").Node,
+  checker: import("typescript-legacy").TypeChecker,
   iconNameSet: Set<string>,
   usedIcons: Set<string>,
-  ts: typeof import("typescript"),
+  ts: typeof import("typescript-legacy"),
 ): void {
   if (!ts.isBinaryExpression(parent)) return;
   const kind = parent.operatorToken.kind;
@@ -155,12 +148,12 @@ function recordIfBinaryComparison(
  * @modifies usedIcons on match
  */
 function recordIfCaseClause(
-  node: import("typescript").StringLiteral,
-  parent: import("typescript").Node,
-  checker: import("typescript").TypeChecker,
+  node: import("typescript-legacy").StringLiteral,
+  parent: import("typescript-legacy").Node,
+  checker: import("typescript-legacy").TypeChecker,
   iconNameSet: Set<string>,
   usedIcons: Set<string>,
-  ts: typeof import("typescript"),
+  ts: typeof import("typescript-legacy"),
 ): void {
   if (!ts.isCaseClause(parent) || !ts.isCaseBlock(parent.parent)) return;
   const switchStmt = parent.parent.parent;
@@ -179,8 +172,8 @@ function recordIfCaseClause(
  * @modifies usedIcons on match
  */
 function recordTemplateMatches(
-  node: import("typescript").TemplateExpression | import("typescript").NoSubstitutionTemplateLiteral,
-  checker: import("typescript").TypeChecker,
+  node: import("typescript-legacy").TemplateExpression | import("typescript-legacy").NoSubstitutionTemplateLiteral,
+  checker: import("typescript-legacy").TypeChecker,
   iconNameSet: Set<string>,
   usedIcons: Set<string>,
 ): void {
@@ -191,7 +184,7 @@ function recordTemplateMatches(
   }
 }
 
-function extractIconNames(type: import("typescript").Type, iconNameSet: Set<string>): string[] {
+function extractIconNames(type: import("typescript-legacy").Type, iconNameSet: Set<string>): string[] {
   const found: string[] = [];
   if (type.isUnion()) {
     for (const t of type.types) {
@@ -205,7 +198,7 @@ function extractIconNames(type: import("typescript").Type, iconNameSet: Set<stri
   return found;
 }
 
-function isIconNameRelated(type: import("typescript").Type, iconNameSet: Set<string>): boolean {
+function isIconNameRelated(type: import("typescript-legacy").Type, iconNameSet: Set<string>): boolean {
   // Check if it's a union type containing icon name literals
   if (type.isUnion()) {
     return type.types.some((t) => {
