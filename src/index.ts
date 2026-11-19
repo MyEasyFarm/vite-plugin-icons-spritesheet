@@ -82,9 +82,11 @@ export const generateIcons = async ({
   const outputDir = path.dirname(outputFile);
   const outputDirRelative = path.relative(cwdToUse, outputDir);
 
+  // globSync returns raw readdir order, which differs between filesystems (APFS vs ext4 in CI).
+  // An explicit locale keeps the order independent of the machine's LANG.
   const files = globSync("**/*.svg", {
     cwd: inputDir,
-  });
+  }).sort((a, b) => a.localeCompare(b, "en"));
   if (files.length === 0) {
     console.log(`⚠️  No SVG files found in ${styleText("red", inputDirRelative)}`);
     return [];

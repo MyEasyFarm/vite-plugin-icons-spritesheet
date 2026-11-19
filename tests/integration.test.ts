@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
@@ -132,6 +132,22 @@ describe("generateIcons", () => {
     assert.ok(names.includes("Multi"), 'missing "Multi" in names');
     assert.ok(names.includes("Polygon"), 'missing "Polygon" in names');
     assert.strictEqual(names.length, 7);
+  });
+
+  it("orders icons case-insensitively regardless of filesystem order", async () => {
+    const mixedInput = path.join(tmpDir, "mixed-case");
+    await mkdir(mixedInput, { recursive: true });
+    for (const name of ["zeta", "Gamma", "beta", "Alpha"]) {
+      await writeFile(path.join(mixedInput, `${name}.svg`), "<svg></svg>");
+    }
+
+    const names = await generateIcons({ inputDir: mixedInput, outputFile, cwd: tmpDir });
+    const sprite = await readFile(outputFile, "utf8");
+    const symbolIds = [...sprite.matchAll(/<symbol[^>]*id="([^"]+)"/g)].map((m) => m[1]);
+
+    const expected = ["Alpha", "Beta", "Gamma", "Zeta"];
+    assert.deepStrictEqual(names, expected);
+    assert.deepStrictEqual(symbolIds, expected);
   });
 
   it("produces no output when input directory has no SVG files", async () => {
