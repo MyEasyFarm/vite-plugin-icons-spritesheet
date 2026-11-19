@@ -3,7 +3,7 @@ import { cp, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { findUnusedIcons } from "../src/unused.ts";
+import { findUnusedIcons } from "../src/unused-legacy.ts";
 
 const FIXTURES_DIR = path.resolve(import.meta.dirname, "fixtures/unused");
 const ALL_ICON_NAMES = ["Circle", "Square", "Triangle", "FlagEn", "FlagFr", "Unused"];

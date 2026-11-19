@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs, styleText } from "node:util";
-import { findUnusedIcons } from "./unused.ts";
+import { findUnusedIcons } from "./unused-legacy.ts";
 
 const { values } = parseArgs({
   options: {
