@@ -8,7 +8,7 @@ import { findUnusedIcons, type UnusedIconsOptions } from "../src/unused.ts";
 import { findUnusedIconsLegacy } from "../src/unused-legacy.ts";
 
 const FIXTURES_DIR = path.resolve(import.meta.dirname, "fixtures/unused");
-const ALL_ICON_NAMES = ["Circle", "Square", "Triangle", "FlagEn", "FlagFr", "Unused"];
+const ALL_ICON_NAMES = ["Circle", "Square", "Triangle", "FlagEn", "FlagFr", "Hexagon", "Unused"];
 
 // The installed `typescript` devDependency is 7.x, so the dispatcher takes the native path;
 // the 5–6 path is exercised directly against the `typescript-legacy` alias.
@@ -54,6 +54,12 @@ for (const [label, findUnused] of IMPLEMENTATIONS) {
       const unused = await findUnused({ typesFile, allIconNames: ALL_ICON_NAMES, cwd: tmpDir });
       assert.ok(!unused.includes("FlagEn"), `expected "FlagEn" to be used, got unused=${JSON.stringify(unused)}`);
       assert.ok(!unused.includes("FlagFr"), `expected "FlagFr" to be used, got unused=${JSON.stringify(unused)}`);
+      assert.ok(unused.includes("Unused"), `expected "Unused" in result, got ${JSON.stringify(unused)}`);
+    });
+
+    it("enum: 'Hexagon' as a string enum member value is detected as used", async () => {
+      const unused = await findUnused({ typesFile, allIconNames: ALL_ICON_NAMES, cwd: tmpDir });
+      assert.ok(!unused.includes("Hexagon"), `expected "Hexagon" to be used, got unused=${JSON.stringify(unused)}`);
       assert.ok(unused.includes("Unused"), `expected "Unused" in result, got ${JSON.stringify(unused)}`);
     });
   });

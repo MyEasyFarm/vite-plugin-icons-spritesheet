@@ -134,7 +134,7 @@ Example output:
    2 of 15 icons appear unused.
 ```
 
-The command uses the TypeScript compiler to perform type-aware analysis. It detects icon names used in typed positions (assignments, function arguments, JSX props), comparisons, switch/case statements, and computed template literals. Untyped string literals that happen to match icon names are not counted as usage.
+The command uses the TypeScript compiler to perform type-aware analysis. It detects icon names used in typed positions (assignments, function arguments, JSX props), comparisons, switch/case statements, computed template literals, and string enum member values (often read back through an untyped key, as in `Enum[key]`). Other untyped string literals that happen to match icon names are not counted as usage.
 
 Requirements: `typescript` 5.x, 6.x or 7.1+ must be installed as a dependency (7.0 is not supported: its API lives under `typescript/unstable/*`), and a `tsconfig.json` must be present in the working directory.
 

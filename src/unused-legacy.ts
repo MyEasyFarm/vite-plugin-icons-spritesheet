@@ -77,8 +77,9 @@ function collectUsedIcons(
 ): void {
   const visit = (node: import("typescript-legacy").Node): void => {
     if (ts.isStringLiteral(node) && iconNameSet.has(node.text)) {
-      const contextMatched = recordIfContextualMatch(node, checker, iconNameSet, usedIcons);
-      if (!contextMatched) {
+      const matched =
+        recordIfEnumMemberValue(node, usedIcons, ts) || recordIfContextualMatch(node, checker, iconNameSet, usedIcons);
+      if (!matched) {
         const nodeType = checker.getTypeAtLocation(node);
         if (nodeType.isStringLiteral() && iconNameSet.has(nodeType.value) && node.parent) {
           recordIfBinaryComparison(node, node.parent, checker, iconNameSet, usedIcons, ts);
@@ -92,6 +93,23 @@ function collectUsedIcons(
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
+}
+
+/**
+ * Enum path: a string enum member value is a named constant written for a reason;
+ * it is typically read back through an untyped key (`Enum[key]`), so neither the
+ * contextual nor the fallback checks ever see it as an IconName.
+ * @modifies usedIcons on match
+ * @returns true iff the icon was recorded via this path (caller skips the others).
+ */
+function recordIfEnumMemberValue(
+  node: import("typescript-legacy").StringLiteral,
+  usedIcons: Set<string>,
+  ts: typeof import("typescript-legacy"),
+): boolean {
+  if (!ts.isEnumMember(node.parent) || node.parent.initializer !== node) return false;
+  usedIcons.add(node.text);
+  return true;
 }
 
 /**
