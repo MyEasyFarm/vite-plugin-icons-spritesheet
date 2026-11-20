@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "prConcurrentLimit": 1,
+  "vulnerabilityAlerts": {
+    "description": "Raise the published floor to the lowest patched version so consumers can't resolve a vulnerable one",
+    "rangeStrategy": "bump"
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Widening the vite peer range claims compatibility nobody tested; keep it manual, in sync with compatiblePackages",
+      "matchDepTypes": ["peerDependencies"],
+      "enabled": false
+    },
+    {
+      "description": "Published library: don't raise consumers' minimum versions without a reason",
+      "matchDepTypes": ["dependencies"],
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "description": "^7.1.0-beta also matches daily 7.1.0-dev.* nightlies",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "!/-dev/"
+    },
+    {
+      "description": "Types must match the minimum supported Node (engines >=22)",
+      "matchPackageNames": ["@types/node"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Alias exists to test against TypeScript 6",
+      "matchDepNames": ["typescript-legacy"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}
