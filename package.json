@@ -77,7 +77,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
-    "@types/node": "^24.12.4",
+    "@types/node": "^22.20.7",
     "husky": "^9.1.7",
     "typescript": "^7.1.0-beta",
     "typescript-legacy": "npm:typescript@^6.0.3",

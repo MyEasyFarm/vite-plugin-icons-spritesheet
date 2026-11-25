@@ -29,8 +29,7 @@
     {
       "description": "Types must match the minimum supported Node (engines >=22)",
       "matchPackageNames": ["@types/node"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "allowedVersions": "22.x"
     },
     {
       "description": "Alias exists to test against TypeScript 6",
